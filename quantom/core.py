@@ -6,6 +6,7 @@ class TradingSystem():
         self._handle_data = kwargs.get('handle_data')
 
     def run(self,data):
+        self._data = data
         self._initialize(self)
-        for i in range(len(data)):
-            self._handle_data(self,data[:i+1])
+        for i in range(len(self._data)):
+            self._handle_data(self,self._data[:i+1])

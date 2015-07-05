@@ -20,3 +20,10 @@ def generate_stock_data(n=250,price=1,pos=2):
         close_prices = np.append(close_prices,prices[3])
 
     return open_prices,high_prices,low_prices,close_prices
+
+
+def sma(data,window=5):
+    pass
+
+def ema(data,window=5):
+    pass
