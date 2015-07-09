@@ -1,5 +1,6 @@
 
 import numpy as np
+import pandas as pd
 
 class Symbol(object):
     def __init__(self,sid):
@@ -103,11 +104,20 @@ class TradingSystem(object):
     def run(self,data):
         self._data = data
         self._initialize(self._context)
-        for i in range(1,len(self._data)-1):
+        for i in range(1,self._data.shape[1]-1):
+
+            cut_off_data1 = {}
+            cut_off_data2 = {}
+            for sym in self._data:
+                cut_off_data1[sym] = self._data[sym][:i]
+                cut_off_data2[sym] = self._data[sym][:i+1]
+            new_data1 = pd.Panel(cut_off_data1)
+            new_data2 = pd.Panel(cut_off_data2)
+
             self._current_time_index = i
-            self._before_market_open(self._context,self._data[:i])
+            self._before_market_open(self._context,new_data1)
             self._execute_orders()
-            self._after_market_close(self._context,self._data[:i+1])
+            self._after_market_close(self._context,new_data2)
 
     def _order(self,symbol,amount,style=MarketOrder()):
         order = Order()
@@ -121,18 +131,19 @@ class TradingSystem(object):
         print 'evaluation portfolio'
         value = 0.
         for asset in self._context.portfolio._assets:
-            close_price = self._data['close'][self._current_time_index-1]
+            close_price = self._data[asset._symbol.get_sid()]['close'][self._current_time_index-1]
             value += asset.get_amount() * close_price
         return value
 
     def _execute_orders(self):
 
-        open_price = self._data['open'][self._current_time_index]
-        high_price = self._data['high'][self._current_time_index]
-        low_price = self._data['low'][self._current_time_index]
-        close_price = self._data['close'][self._current_time_index]
-
         for order in self._order_queue:
+
+            open_price = self._data[order.symbol.get_sid()]['open'][self._current_time_index]
+            high_price = self._data[order.symbol.get_sid()]['high'][self._current_time_index]
+            low_price = self._data[order.symbol.get_sid()]['low'][self._current_time_index]
+            close_price = self._data[order.symbol.get_sid()]['close'][self._current_time_index]
+
             if isinstance(order.style,MarketOrder):
                 if order.amount >= 0:
                     slippage = 0.001 + np.random.normal(0,0.0005)  # add some slippage , doesn't care about the impact of the buying

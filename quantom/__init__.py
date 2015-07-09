@@ -3,7 +3,7 @@ from core import (
     MarketOrder,LimitOrder,StopOrder
 )
 
-from util import generate_stock_data
+from util import generate_stock,generate_stocks
 
 __all__ = [
     'core',
@@ -16,6 +16,6 @@ __all__ = [
     'LimitOrder',
     'StopOrder',
     'util',
-    'generate_stock_data'
-
+    'generate_stock',
+    'generate_stocks'
 ]

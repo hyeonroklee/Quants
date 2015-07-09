@@ -1,6 +1,14 @@
 import numpy as np
+import pandas as pd
 
-def generate_stock_data(n=250,price=1,pos=2):
+def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=1,pos=2):
+    stocks = {}
+    for symbol in symbols:
+        stocks[symbol] = \
+            pd.DataFrame(np.matrix(generate_stock(n,price,pos)).T.tolist(),columns=['open','high','low','close'])
+    return pd.Panel(stocks)
+
+def generate_stock(n=250,price=1,pos=2):
     start_price = np.round(price,pos)
     open_prices = np.array([start_price])
     high_prices = np.array([start_price])
