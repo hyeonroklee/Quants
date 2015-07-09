@@ -23,6 +23,30 @@ class Asset(object):
     def __str__(self):
         return str(self._symbol) + ' price = ' + str(self._buying_price) + ' amount = ' + str(self._amount)
 
+class MarketOrder(object):
+    def __init__(self):
+        super(MarketOrder, self).__init__()
+
+class LimitOrder(object):
+    def __init__(self,price):
+        super(LimitOrder, self).__init__()
+        self._price = price
+    def get_price(self):
+        return self._price
+
+class StopOrder(object):
+    def __init__(self,price):
+        super(StopOrder, self).__init__()
+        self._price = price
+    def get_price(self):
+        return self._price
+
+class Order(object):
+    def __init__(self):
+        super(Order, self).__init__()
+    def get_id(self):
+        return self.__hash__()
+
 class Context(object):
     def __init__(self,trading_system,initial_capital=10000.):
         super(Context, self).__init__()
@@ -34,6 +58,9 @@ class Context(object):
     def get_value(self):
         return self._trading_system._do_portfolio_valuation()
 
+    def order(self,symbol,amount,style=MarketOrder()):
+        return self._trading_system._order(symbol,amount,style)
+
     def __str__(self):
         msg = '>>>>>> Context >>>>>\n'
         msg += 'initial_capital = ' + str(self.initial_capital) + '\n'
@@ -41,7 +68,8 @@ class Context(object):
         msg += str(self.portfolio)
         msg += 'portfolio value = ' + str(self.get_value()) + '\n'
         msg += 'portfolio total buying price = ' + str(self.portfolio.get_total_buying_price()) + '\n'
-        msg += 'portfolio return = ' + str( self.get_value() /  self.portfolio.get_total_buying_price() - 1) + '\n'
+        if self.portfolio.get_total_buying_price() != 0:
+            msg += 'portfolio return = ' + str( self.get_value() /  self.portfolio.get_total_buying_price() - 1) + '\n'
         msg += '<<<<<< Context <<<<<<'
         return msg
 
@@ -64,29 +92,6 @@ class Portfolio(object):
             msg += str(asset) + '\n'
         return msg
 
-class MarketOrder(object):
-    def __init__(self):
-        super(MarketOrder, self).__init__()
-
-class LimitOrder(object):
-    def __init__(self,price):
-        super(LimitOrder, self).__init__()
-        self._price = price
-    def get_price(self):
-        return self._price
-
-class StopOrder(object):
-    def __init__(self,price):
-        super(StopOrder, self).__init__()
-        self._price = price
-    def get_price(self):
-        return self._price
-
-class Order(object):
-    def __init__(self):
-        super(Order, self).__init__()
-
-
 class TradingSystem(object):
     def __init__(self,**kwargs):
         self._initialize = kwargs.get('initialize')
@@ -104,12 +109,13 @@ class TradingSystem(object):
             self._execute_orders()
             self._after_market_close(self._context,self._data[:i+1])
 
-    def order(self,symbol,amount,style=MarketOrder()):
+    def _order(self,symbol,amount,style=MarketOrder()):
         order = Order()
         order.symbol = symbol
         order.amount = amount
         order.style = style
         self._order_queue.append(order)
+        return order.get_id()
 
     def _do_portfolio_valuation(self):
         print 'evaluation portfolio'

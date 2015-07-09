@@ -2,15 +2,13 @@ import numpy as np
 import pandas as pd
 from quantom import *
 
-global ts
-
 def initialize(context):
     print 'initialize ...'
     context.security = Symbol('AAPL')
 
 def before_market_open(context,data):
     print 'before_market_open ...'
-    ts.order(context.security,100,style=LimitOrder(9.5))
+    print 'order = ' + str(context.order(context.security,100,style=LimitOrder(9.5)))
 
 def after_market_close(context,data):
     print 'after_market_close ...'
