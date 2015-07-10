@@ -11,6 +11,7 @@ def before_market_open(context,data):
     print 'before_market_open ...'
     for sym in context.symbols:
         print 'order = ' + str(context.order(sym,10,style=LimitOrder(9.5)))
+        print 'order = ' + str(context.order(sym,-5,style=LimitOrder(10.)))
 
 def after_market_close(context,data):
     print 'after_market_close ...'
