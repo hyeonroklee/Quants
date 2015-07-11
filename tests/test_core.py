@@ -8,26 +8,20 @@ def initialize(context):
 
 
 def before_market_open(context,data):
-    print 'before_market_open ...'
+    print '\n\nbefore_market_open ...'
+
+    print str(context.portfolio)
+
     for sym in context.symbols:
-        print 'order = ' + str(context.order(sym,10,style=LimitOrder(9.5)))
-        print 'order = ' + str(context.order(sym,-5,style=LimitOrder(10.)))
+        context.order(sym,10,LimitOrder(9.5))
+        context.order(sym,-5,LimitOrder(10.5))
 
 def after_market_close(context,data):
-    print 'after_market_close ...'
-    print context.get_value()
+    print 'after_market_close ...\n\n'
 
 if __name__ == '__main__':
-    data = generate_stocks(price=10.)
+    data = generate_stocks(n=200,price=10.)
+    print data.shape
     ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close)
     ts.run(data)
     print str(ts._context)
-
-
-    # p = {}
-    # for sym in data:
-    #     print data[sym][:2]
-    #     p[sym] = data[sym][:2]
-    #
-    # p = pd.Panel(p)
-    # print p
