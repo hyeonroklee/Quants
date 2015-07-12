@@ -1,5 +1,12 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.finance as mfinance
+import matplotlib.ticker as mticker
+import matplotlib.dates as mdates
+from datetime import datetime
+
 from quantom import *
 
 def initialize(context):
@@ -21,7 +28,63 @@ def after_market_close(context,data):
 
 if __name__ == '__main__':
     data = generate_stocks(n=200,price=10.)
-    print data.shape
-    ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close)
-    ts.run(data)
-    print str(ts._context)
+
+    # for i in range(5,data.shape[1]):
+    #     print np.sum(data['AAPL']['close'][i-5:i])/5
+    smv5  = sma(data['AAPL']['close'],window=5)
+    smv10 = sma(data['AAPL']['close'],window=10)
+    ma1,ma2,h = macd(data['AAPL']['close'])
+
+    # ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close)
+    # ts.run(data)
+    # print str(ts._context)
+
+    fig, (ax,ax1) = plt.subplots(2,1)
+    mondays = mdates.WeekdayLocator(mdates.MONDAY)
+    alldays = mdates.DayLocator()
+    weekFormatter = mdates.DateFormatter('%b %d')
+    dayFormatter = mdates.DateFormatter('%d')
+    fig.subplots_adjust(bottom=0.2)
+    ax.xaxis.set_major_locator(mondays)
+    ax.xaxis.set_minor_locator(alldays)
+    ax.xaxis.set_major_formatter(weekFormatter)
+    symbol = 'AAPL'
+    open_prices = data[symbol]['open']
+    high_prices = data[symbol]['high']
+    low_prices = data[symbol]['low']
+    close_prices = data[symbol]['close']
+    mfinance.candlestick2_ohlc(ax, open_prices,high_prices,low_prices, close_prices, width=0.6 , colordown=u'b', colorup=u'r' )
+    ax.plot(range(5,200),smv5)
+    ax.plot(range(10,200),smv10)
+
+    ax1.bar(range(len(h)),h)
+
+    ax.xaxis_date()
+    ax.autoscale_view()
+    plt.setp( plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
+
+    plt.show()
+
+    '''
+    # graphing chart
+    open_prices,high_prices,low_prices,close_prices = generate_stock_data(n=20,price=132.12)
+    mondays = mdates.WeekdayLocator(mdates.MONDAY)
+    alldays = mdates.DayLocator()
+    weekFormatter = mdates.DateFormatter('%b %d')
+    dayFormatter = mdates.DateFormatter('%d')
+
+    fig, ax = plt.subplots(1,1)
+    fig.subplots_adjust(bottom=0.2)
+    ax.xaxis.set_major_locator(mondays)
+    ax.xaxis.set_minor_locator(alldays)
+    ax.xaxis.set_major_formatter(weekFormatter)
+
+    mfinance.candlestick2_ohlc(ax, open_prices,high_prices, \
+        low_prices, close_prices, width=0.6 , colordown=u'b', colorup=u'r' )
+
+    ax.xaxis_date()
+    ax.autoscale_view()
+    plt.setp( plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
+
+    plt.show()
+    '''
