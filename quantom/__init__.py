@@ -3,7 +3,8 @@ from core import (
     MarketOrder,LimitOrder,StopOrder
 )
 
-from util import generate_stock,generate_stocks,sma,macd
+from util import sma,macd,show_chart
+from datasets import generate_stock,generate_stocks
 
 __all__ = [
     'core',
@@ -19,5 +20,6 @@ __all__ = [
     'generate_stock',
     'generate_stocks',
     'sma',
-    'macd'
+    'macd',
+    'show_chart'
 ]
