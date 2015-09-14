@@ -101,20 +101,13 @@ class Portfolio(object):
 
 
 class Context(object):
-    def __init__(self,trading_system,initial_capital=10000.):
+    def __init__(self,initial_capital=10000.):
         super(Context, self).__init__()
-        self._trading_system = trading_system
         self.portfolio = Portfolio()
         self.initial_capital = initial_capital
         self.cash_used_for_buying = 0.
         self.cash_obtained_from_selling = 0.
         self.cash = initial_capital
-
-    def get_portfolio_value(self):
-        return self._trading_system._do_portfolio_valuation()
-
-    def order(self,symbol,amount,style=MarketOrder()):
-        return self._trading_system._order(symbol,amount,style)
 
     def __str__(self):
         msg = '>>>>>> Context >>>>>\n'
@@ -122,9 +115,9 @@ class Context(object):
         msg += 'capital_used_for_buying = ' + str(self.cash_used_for_buying) + '\n'
         msg += 'capital_obtained_from_selling = ' + str(self.cash_obtained_from_selling) + '\n'
         msg += 'cash = ' + str(self.cash) + '\n'
-        msg += 'portfolio value = ' + str(self.get_portfolio_value()) + '\n'
-        msg += 'total value = ' + str(self.cash + self.get_portfolio_value()) + '\n'
-        msg += 'return = ' + str( ((self.cash + self.get_portfolio_value()) / self.initial_capital) - 1 ) + '\n'
+        msg += 'portfolio value = ' + str(self.do_portfolio_valuation()) + '\n'
+        msg += 'total value = ' + str(self.cash + self.do_portfolio_valuation()) + '\n'
+        msg += 'return = ' + str( ((self.cash + self.do_portfolio_valuation()) / self.initial_capital) - 1 ) + '\n'
         assets = self.portfolio.get_assets()
         for symbol in assets:
             msg += '  ' + str(assets[symbol].get_symbol()) + ' ' + str(assets[symbol].get_amount()) + ' ' + str(assets[symbol].get_avg_buying_price()) + '\n'
@@ -136,10 +129,14 @@ class TradingSystem(object):
         self._initialize = kwargs.get('initialize')
         self._before_market_open = kwargs.get('before_market_open')
         self._after_market_close = kwargs.get('after_market_close')
-        self._context = Context(self)
+
+        self._context = Context()
+        self._current_time_index = 0
+        self._context.order = self._order
+        self._context.do_portfolio_valuation = self._do_portfolio_valuation
+
         self._order_queue = []
         self._data = []
-        self._current_time_index = 0
 
     def run(self,data):
         self._data = data

@@ -26,6 +26,25 @@ def macd(data,long=26,short=12,signal=9,ma=sma):
 
     return ma1,ma2,hist,long_ma,short_ma
 
+def compute_return(prices):
+    daily_ret = (prices[1:prices.shape[0],:] - prices[0:prices.shape[0]-1,:]) / prices[0:prices.shape[0]-1,:]
+    mean_ret = (daily_ret.T * np.asmatrix(np.ones( [daily_ret.shape[0],1] ))) / daily_ret.shape[0]
+    diff = (daily_ret - mean_ret.T)
+    cov_ret = (diff.T * diff) / daily_ret.shape[0]
+    return daily_ret,mean_ret,cov_ret
+
+def compute_return_risk_pf(mean_ret,cov_ret,w):
+    pf_expected_return = mean_ret.T * w
+    pf_risk = w.T * cov_ret * w
+    return pf_expected_return,pf_risk
+
+def compute_moving_avarage(series):
+    s = [0]
+    for i in range(1,len(series)-1):
+        s.append( (series[i-1] + series[i] + series[i+1]) * (1./3) )
+    s.append(0)
+    return s
+
 def show_chart(stock_data,**kwargs):
 
     macd_params = kwargs.get('macd')
