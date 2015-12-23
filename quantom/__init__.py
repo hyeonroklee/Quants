@@ -3,11 +3,9 @@ from core import (
     MarketOrder,LimitOrder,StopOrder
 )
 
-from util import sma,macd,show_chart
-from datasets import generate_stock,generate_stocks
+from util import sma,macd,generate_stock_prices,generate_stocks
 
 __all__ = [
-    'core',
     'Symbol',
     'Asset',
     'Context',
@@ -16,10 +14,8 @@ __all__ = [
     'MarketOrder',
     'LimitOrder',
     'StopOrder',
-    'util',
-    'generate_stock',
+    'generate_stock_prices',
     'generate_stocks',
     'sma',
-    'macd',
-    'show_chart'
+    'macd'
 ]

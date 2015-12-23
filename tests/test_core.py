@@ -1,22 +1,27 @@
 
-from quantom import *
+# from quantom import *
+#
+# def initialize(context):
+#     print 'initialize ...'
+#     context.symbols = [ Symbol('AAPL') , Symbol('AMZN') ]
+#
+# def before_market_open(context,data):
+#     print 'before_market_open ...'
+#
+# def after_market_close(context,data):
+#     print 'after_market_close ...'
 
-def initialize(context):
-    print 'initialize ...'
-    context.symbols = [ Symbol('AAPL') , Symbol('AMZN') ]
+# import quantom.util as ut
 
-def before_market_open(context,data):
-    print 'before_market_open ...'
-
-def after_market_close(context,data):
-    print 'after_market_close ...'
+import quantom as q
 
 if __name__ == '__main__':
+    pass
 
-    data = generate_stocks(n=5,price=10.)
-    ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close)
-    ts.run(data)
-    print str(ts._context)
+    # data = generate_stocks(n=5,price=10.)
+    # ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close)
+    # ts.run(data)
+    # print str(ts._context)
 
     # # for i in range(5,data.shape[1]):
     # #     print np.sum(data['AAPL']['close'][i-5:i])/5

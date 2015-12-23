@@ -1,84 +1,54 @@
 import numpy as np
 import pandas as pd
 
-from datetime import datetime
+def sma(prices,window=5):
+    prices = np.array(prices,dtype=float)
+    moving_average = []
+    for i in range(window,len(prices)+1):
+        moving_average.append(np.sum(prices[i-window:i]) / np.float(window) )
+    return np.array(moving_average)
 
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib.finance as mfinance
-import matplotlib.ticker as mticker
-import matplotlib.dates as mdates
+def macd(prices,long=26,short=12,signal=9,ma=sma):
+    ma_long = ma(prices,long)
+    ma_short = ma(prices,short)
+    macd_line = ma_short[-len(ma_long):] - ma_long
+    macd_signal = ma(macd_line,signal)
+    macd_hist = macd_line[-len(macd_signal):] - macd_signal
+    return macd_line[-len(macd_signal):],macd_signal,macd_hist,ma_long[-len(macd_signal):],ma_short[-len(macd_signal):]
 
-def sma(data,window=5):
-    series = []
-    for i in range(window,len(data)):
-        series.append( np.sum(data[i-window:i]) / window )
-    return pd.Series(series)
-
-def macd(data,long=26,short=12,signal=9,ma=sma):
-    long_ma = ma(data,window=long)
-    short_ma = ma(data,window=short)[long-short:]
-
-    ma = (np.array(short_ma.tolist()) - np.array(long_ma.tolist()))
-    ma1 = ma[signal:]
-    ma2 = sma(ma,signal)
-    hist = np.array(ma1) - np.array(ma2)
-
-    return ma1,ma2,hist,long_ma,short_ma
+def bollinger_bands():
+    pass
 
 def compute_return(prices):
-    daily_ret = (prices[1:prices.shape[0],:] - prices[0:prices.shape[0]-1,:]) / prices[0:prices.shape[0]-1,:]
-    mean_ret = (daily_ret.T * np.asmatrix(np.ones( [daily_ret.shape[0],1] ))) / daily_ret.shape[0]
-    diff = (daily_ret - mean_ret.T)
-    cov_ret = (diff.T * diff) / daily_ret.shape[0]
-    return daily_ret,mean_ret,cov_ret
+    prices = np.array(prices,dtype=float)
+    return (prices[1:] - prices[:-1]) / prices[:-1]
 
-def compute_return_risk_pf(mean_ret,cov_ret,w):
-    pf_expected_return = mean_ret.T * w
-    pf_risk = w.T * cov_ret * w
-    return pf_expected_return,pf_risk
 
-def compute_moving_avarage(series):
-    s = [0]
-    for i in range(1,len(series)-1):
-        s.append( (series[i-1] + series[i] + series[i+1]) * (1./3) )
-    s.append(0)
-    return s
+def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=1,pos=2):
+    stocks = {}
+    for symbol in symbols:
+        stocks[symbol] = \
+            pd.DataFrame(np.matrix(generate_stock_prices(n,price,pos)).T.tolist(),columns=['open','high','low','close','volume'])
+    return pd.Panel(stocks)
 
-def show_chart(stock_data,**kwargs):
+def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=1000000):
+    start_price = np.round(price,pos)
+    open_prices = np.array([start_price])
+    high_prices = np.array([start_price])
+    low_prices = np.array([start_price])
+    close_prices = np.array([start_price])
+    volumes = np.array([initial_volume])
 
-    macd_params = kwargs.get('macd')
+    for i in np.arange(1,n):
+        prices = np.array([])
+        prices = np.append(prices, max(np.round(close_prices[i-1] + close_prices[i-1] * np.random.normal(scale=0.02),pos),min_price_bound) )
+        prices = np.append(prices, max(np.round(prices[0] + prices[0] * np.random.normal(scale=0.03),pos),min_price_bound) )
+        prices = np.append(prices, max(np.round(prices[1] + prices[1] * np.random.normal(scale=0.03),pos),min_price_bound) )
+        prices = np.append(prices, max(np.round(prices[2] + prices[2] * np.random.normal(scale=0.02),pos),min_price_bound) )
 
-    open_prices = stock_data['open']
-    high_prices = stock_data['high']
-    low_prices = stock_data['low']
-    close_prices = stock_data['close']
-
-    fig, (ax1,ax2) = plt.subplots(2,1)
-
-    mondays = mdates.WeekdayLocator(mdates.MONDAY)
-    alldays = mdates.DayLocator()
-    weekFormatter = mdates.DateFormatter('%b %d')
-    dayFormatter = mdates.DateFormatter('%d')
-
-    ax1.xaxis.set_major_locator(mondays)
-    ax1.xaxis.set_minor_locator(alldays)
-    ax1.xaxis.set_major_formatter(weekFormatter)
-    mfinance.candlestick2_ohlc(ax1, open_prices,high_prices,low_prices, close_prices, width=0.6 , colordown=u'b', colorup=u'r' )
-    ax1.xaxis_date()
-    ax1.autoscale_view()
-
-    if macd_params is not None:
-        ma1,ma2,h,long_ma,short_ma = macd(close_prices,macd_params[0],macd_params[1],macd_params[2])
-        ax1.plot(range(macd_params[1],macd_params[1]+len(short_ma)),short_ma)
-        ax1.plot(range(macd_params[0],macd_params[0]+len(long_ma)),long_ma)
-
-        ax2.plot(range(macd_params[0],macd_params[0]+len(ma1)),ma1)
-        ax2.plot(range(macd_params[0]+macd_params[2],macd_params[0]+macd_params[2]+len(ma2)),ma2)
-        ax2.bar(range(macd_params[0]+macd_params[2],macd_params[0]+macd_params[2]+len(h)),h)
-        ax2.set_xlim([0,200])
-
-    # fig.subplots_adjust(bottom=0.2)
-
-    plt.setp( plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
-    plt.show()
+        open_prices = np.append(open_prices,prices[0])
+        high_prices = np.append(high_prices,np.max(prices))
+        low_prices = np.append(low_prices,np.min(prices))
+        close_prices = np.append(close_prices,prices[3])
+        volumes = np.append(volumes,volumes[i-1])
+    return open_prices,high_prices,low_prices,close_prices,volumes
