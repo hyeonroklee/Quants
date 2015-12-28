@@ -52,3 +52,6 @@ def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=
         close_prices = np.append(close_prices,prices[3])
         volumes = np.append(volumes,volumes[i-1])
     return open_prices,high_prices,low_prices,close_prices,volumes
+
+def show_chart(**kwargs):
+    pass
