@@ -90,6 +90,20 @@ class Portfolio(object):
         else:
             raise Exception('No such asset in Portfolio : %s ' % symbol)
 
+    def has_asset(self,symbol):
+        sid = symbol.get_sid()
+        if self._assets.has_key(sid):
+            return True
+        else:
+            return False
+
+    def get_asset_amount(self,symbol):
+        sid = symbol.get_sid()
+        if self._assets.has_key(sid):
+            return self._assets[sid].get_amount()
+        else:
+            return 0
+
     def get_assets(self):
         return self._assets
 
@@ -194,8 +208,6 @@ class TradingSystem(object):
                 print 'price can not be under 0'
                 continue
 
-            print str(order.symbol.get_sid()) + ' ' + str(open_price) + ' ' + str(high_price) + ' ' + str(low_price) + ' ' + str(close_price)
-
             slippage = np.random.normal(0,0.0005)
             adjust_buying_price = -1.
             adjust_selling_price = -1.
@@ -233,7 +245,7 @@ class TradingSystem(object):
 
                 order.amount = np.abs(order.amount)
                 cash_obtained_from_selling = adjust_selling_price * order.amount
-                if self._context.portfolio.get_assets().has_key(order.symbol) and self._context.portfolio.get_assets()[order.symbol].get_amount() >= order.amount:
+                if self._context.portfolio.has_asset(order.symbol) and self._context.portfolio.get_asset_amount(order.symbol) >= order.amount:
                     self._context.cash_obtained_from_selling += cash_obtained_from_selling
                     self._context.cash += cash_obtained_from_selling
                     self._context.portfolio.sub_asset(order.symbol,order.amount)
