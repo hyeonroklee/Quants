@@ -3,7 +3,11 @@ from core import (
     MarketOrder,LimitOrder,StopOrder
 )
 
-from util import sma,macd,bollinger_bands,generate_stock_prices,generate_stocks,show_chart
+from util import (
+    sma,macd,bollinger_bands,
+    generate_stock_prices,generate_stocks,show_chart,
+    compute_return,optimize_portfolio
+)
 
 __all__ = [
     'Symbol',
@@ -19,5 +23,7 @@ __all__ = [
     'sma',
     'macd',
     'bollinger_bands',
-    'show_chart'
+    'show_chart',
+    'compute_return',
+    'optimize_portfolio'
 ]

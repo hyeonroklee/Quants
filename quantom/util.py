@@ -40,6 +40,8 @@ def compute_return(prices):
     prices = np.array(prices,dtype=float)
     return (prices[1:] - prices[:-1]) / prices[:-1]
 
+def optimize_portfolio():
+    pass
 
 def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=1,pos=2):
     stocks = {}
