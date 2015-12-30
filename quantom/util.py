@@ -43,11 +43,40 @@ def compute_return(prices):
 def optimize_portfolio():
     pass
 
-def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=1,pos=2):
+def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date=dt.datetime.today()):
     stocks = {}
     for symbol in symbols:
-        stocks[symbol] = generate_stock_prices(n,price,pos)
-    return pd.Panel(stocks)
+        stocks[symbol] = []
+    dates = [(start_date + dt.timedelta(days=i)).strftime('%Y%m%d') for i in range(n)]
+
+    for i in np.arange(0,n):
+        r = np.random.multivariate_normal(mean,cov,size=4)
+
+        for j in range(len(symbols)):
+            prices = []
+
+            prev_price = np.round(price,pos)
+            if len(stocks[symbols[j]]) > 0:
+                prev_price = stocks[symbols[j]][-1][-2]
+
+            prices.append(max(np.round(prev_price + prev_price * r[0][j],pos),0))
+            prices.append(max(np.round(prices[0] + prices[0] * r[1][j],pos),0))
+            prices.append(max(np.round(prices[1] + prices[1] * r[2][j],pos),0))
+            prices.append(max(np.round(prices[2] + prices[2] * r[3][j],pos),0))
+
+            open_price = prices[0]
+            high_price = np.max(prices)
+            low_price = np.min(prices)
+            close_price = prices[3]
+            volume = initial_volume
+
+            stocks[symbols[j]].append([open_price,high_price,low_price,close_price,volume])
+
+    ss = {}
+    for symbol in stocks:
+        ss[symbol] = pd.DataFrame(stocks[symbol],columns=['open','high','low','close','volumes'],index=dates)
+
+    return pd.Panel(ss)
 
 def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=1000000,start_date=dt.datetime.today()):
     start_price = np.round(price,pos)
