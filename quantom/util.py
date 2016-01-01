@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import datetime as dt
+import scipy.optimize as opt
 
 import matplotlib.pyplot as plt
 import matplotlib.finance as mfinance
@@ -40,8 +41,42 @@ def compute_return(prices):
     prices = np.array(prices,dtype=float)
     return (prices[1:] - prices[:-1]) / prices[:-1]
 
-def optimize_portfolio():
-    pass
+def optimize_portfolio(prices):
+    n = len(prices)
+    ret_close_prices = []
+    r = []
+    for symbol in prices:
+        ret_close_price = prices[symbol]['close'].pct_change().values[1:]
+        ret_close_prices.append(ret_close_price)
+        r.append(np.mean(ret_close_price))
+
+    w = np.matrix(np.ones(n)/n)
+    r = np.matrix(r).T
+    c = np.matrix(np.cov(ret_close_prices))
+
+    def calculate_mean_var(W,R,C):
+        return W*R,W*C*W.T
+
+    def fitness(W,R=r,C=c,rf=0.0):
+        W = np.matrix(W)
+        port_mean,port_var = calculate_mean_var(W,R,C)
+        # util = (port_mean - rf) / np.sqrt(port_var)
+        return port_var + 100*abs(port_mean-rf)
+
+    rets = []
+    vars = []
+
+    for rf in np.linspace(min(r)[0,0],max(r)[0,0],num=20):
+        n = 3
+        w = np.matrix(np.ones(n)/n)
+        _b = [ (0.,1.) for i in range(n)]
+        _c = ({'type':'eq', 'fun': lambda W: sum(W)-1. })
+        result = opt.minimize(fitness, w, args=(r,c,rf) ,method='SLSQP',constraints=_c,bounds=_b)
+        ret,var = calculate_mean_var(np.matrix(result.x),r,c)
+        rets.append(ret[0,0])
+        vars.append(var[0,0])
+
+    return rets,vars
 
 def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date=dt.datetime.today()):
     stocks = {}

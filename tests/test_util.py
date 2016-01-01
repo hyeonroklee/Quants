@@ -2,31 +2,27 @@
 import numpy as np
 import pandas as pd
 import datetime as dt
+import scipy.optimize as opt
+import matplotlib.pyplot as plt
 
 from quantom import *
-
-import matplotlib.pyplot as plt
-import matplotlib.finance as mfinance
-import matplotlib.dates as mdates
-import matplotlib.ticker as mticker
-
-from matplotlib.finance import quotes_historical_yahoo_ohlc
 
 if __name__ == '__main__':
     cov=[[0.0004,0.0002,0.0002],
          [0.0002,0.0004,0.0002],
          [0.0002,0.0002,0.0004]]
-    d = generate_stocks(n=100,cov=cov)
-    s1 = d['AAPL']
-    s2 = d['GOOG']
-    s3 = d['AMZN']
+    d = generate_stocks(n=100)
 
-    # m,u,l = bollinger_bands(stock_data['close'])
-    #
-    # print m[:2]
-    # print u[:2]
-    # print l[:2]
+    port_rets, port_vars = optimize_portfolio(d)
+    plt.plot(port_vars,port_rets)
+    plt.show()
 
-    show_chart(s1)
-    show_chart(s2)
-    show_chart(s3)
+
+    # ret_close_prices = compute_return(close_prices)
+    # print len(close_prices),len(ret_close_prices)
+    # print np.mean(ret_close_prices), np.var(ret_close_prices)
+    # np.cov
+
+    # show_chart(s1)
+    # show_chart(s2)
+    # show_chart(s3)
