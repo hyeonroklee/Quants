@@ -65,6 +65,7 @@ def optimize_portfolio(prices):
 
     rets = []
     vars = []
+    ws = []
 
     for rf in np.linspace(min(r)[0,0],max(r)[0,0],num=20):
         n = 3
@@ -73,10 +74,11 @@ def optimize_portfolio(prices):
         _c = ({'type':'eq', 'fun': lambda W: sum(W)-1. })
         result = opt.minimize(fitness, w, args=(r,c,rf) ,method='SLSQP',constraints=_c,bounds=_b)
         ret,var = calculate_mean_var(np.matrix(result.x),r,c)
+        ws.append(result.x)
         rets.append(ret[0,0])
         vars.append(var[0,0])
 
-    return rets,vars
+    return ws,rets,vars
 
 def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date=dt.datetime.today()):
     stocks = {}

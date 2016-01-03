@@ -13,9 +13,11 @@ if __name__ == '__main__':
          [0.0002,0.0002,0.0004]]
     d = generate_stocks(n=100)
 
-    port_rets, port_vars = optimize_portfolio(d)
-    plt.plot(port_vars,port_rets)
-    plt.show()
+    port_weights, port_rets, port_vars = optimize_portfolio(d)
+    print port_weights
+
+    # plt.plot(port_vars,port_rets)
+    # plt.show()
 
 
     # ret_close_prices = compute_return(close_prices)
