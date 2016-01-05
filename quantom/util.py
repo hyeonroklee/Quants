@@ -37,6 +37,17 @@ def bollinger_bands(prices,middle=20):
 
     return np.array(middle_band),np.array(upper_band),np.array(lower_band)
 
+def rsi(prices,window=14,signal=9):
+    rsi_ind = []
+    prices = np.array(prices,dtype=float)
+    for i in range(window,len(prices)+1):
+        diff = prices[i-window+1:i] - prices[i-window:i-1]
+        up_avarage = np.mean(diff[diff >= 0] if diff[diff >= 0].size > 0 else 0.01)
+        down_avarage = np.mean(diff[diff < 0] if diff[diff < 0].size > 0 else 0.01)
+        # print diff,diff[diff >= 0],diff[diff < 0],up_avarage,down_avarage,up_avarage/np.abs(down_avarage),100 - 100/(1+up_avarage/np.abs(down_avarage))
+        rsi_ind.append(100 - 100/(1+up_avarage/np.abs(down_avarage)))
+    return np.array(rsi_ind),sma(rsi_ind,signal)
+
 def compute_return(prices):
     prices = np.array(prices,dtype=float)
     return (prices[1:] - prices[:-1]) / prices[:-1]
@@ -162,7 +173,6 @@ def show_chart(prices,indicator_type='macd'):
     plt.ylabel('Stock price')
     ax2 = plt.subplot2grid((5,4),(4,0),sharex=ax1,rowspan=1,colspan=4)
     ax2.grid(True)
-    ax2.axes.yaxis.set_ticklabels([])
 
     middle,upper,lower = bollinger_bands(close_prices)
     ax1.plot(dates[-len(middle):],middle)
@@ -177,10 +187,18 @@ def show_chart(prices,indicator_type='macd'):
         ax2.plot(dates[-len(macd_line):],macd_line)
         ax2.plot(dates[-len(macd_signal):],macd_signal)
         ax2.bar(dates[-len(macd_hist):],macd_hist)
+        ax2.axes.yaxis.set_ticklabels([])
 
         plt.ylabel('MACD')
+    elif indicator_type == 'rsi':
+        r,s = rsi(close_prices)
+        ax2.plot(dates[-len(r):],r)
+        ax2.plot(dates[-len(s):],s)
+        plt.ylabel('RSI')
     else:
         plt.ylabel('Volumes')
+        ax2.axes.yaxis.set_ticklabels([])
+
     fig.subplots_adjust(hspace=0)
     plt.setp( plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
     plt.setp(ax1.get_xticklabels(),visible=False)
