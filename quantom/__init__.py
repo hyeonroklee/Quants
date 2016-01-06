@@ -4,7 +4,7 @@ from core import (
 )
 
 from util import (
-    sma,macd,bollinger_bands,rsi,
+    sma,ema,macd,bollinger_bands,rsi,
     generate_stock_prices,generate_stocks,show_chart,
     compute_return,optimize_portfolio
 )
@@ -21,6 +21,7 @@ __all__ = [
     'generate_stock_prices',
     'generate_stocks',
     'sma',
+    'ema',
     'macd',
     'bollinger_bands',
     'rsi',

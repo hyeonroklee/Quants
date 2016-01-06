@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.finance as mfinance
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
+import matplotlib.transforms as mtransforms
 
 def sma(prices,window=5):
     prices = np.array(prices,dtype=float)
@@ -14,6 +15,9 @@ def sma(prices,window=5):
     for i in range(window,len(prices)+1):
         moving_average.append(np.mean(prices[i-window:i]))
     return np.array(moving_average)
+
+def ema(prices,window=5):
+    pass
 
 def macd(prices,long=26,short=12,signal=9,ma=sma):
     ma_long = ma(prices,long)
@@ -152,7 +156,7 @@ def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=
 
     return pd.DataFrame(np.matrix([open_prices,high_prices,low_prices,close_prices,volumes]).T.tolist(),columns=['open','high','low','close','volumes'],index=dates)
 
-def show_chart(prices,indicator_type='macd'):
+def show_chart(prices,indicators=['macd','bollinger'],buying_prices=None,selling_prices=None):
 
     dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in prices.index.values]
     open_prices = prices['open']
@@ -165,7 +169,7 @@ def show_chart(prices,indicator_type='macd'):
 
     fig = plt.figure()
     ax1 = plt.subplot2grid((5,4),(0,0),rowspan=4,colspan=4)
-    mfinance.candlestick_ohlc(ax1,chart_data,width=1,colorup='r',colordown='b')
+    mfinance.candlestick_ohlc(ax1,chart_data,colorup='r',colordown='b',alpha=0.7)
     ax1.grid(True)
     ax1.xaxis.set_major_locator(mticker.MaxNLocator(10))
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
@@ -174,29 +178,50 @@ def show_chart(prices,indicator_type='macd'):
     ax2 = plt.subplot2grid((5,4),(4,0),sharex=ax1,rowspan=1,colspan=4)
     ax2.grid(True)
 
-    middle,upper,lower = bollinger_bands(close_prices)
-    ax1.plot(dates[-len(middle):],middle)
-    ax1.plot(dates[-len(upper):],upper)
-    ax1.plot(dates[-len(lower):],lower)
+    if buying_prices is not None:
+        dx, dy = -6/72., 0.
+        offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
+        shadow_transform = ax1.transData + offset
 
-    if indicator_type == 'macd':
+        buying_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in buying_prices.index.values]
+        ax1.plot(buying_dates,buying_prices[0].values,'r>',transform=shadow_transform)
+
+    if selling_prices is not None:
+        dx, dy = +6/72., 0.
+        offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
+        shadow_transform = ax1.transData + offset
+
+        selling_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in selling_prices.index.values]
+        ax1.plot(selling_dates,selling_prices[0].values,'b<',transform=shadow_transform)
+
+    if indicators is not None and 'ma5' in indicators:
+        ma5 = sma(close_prices,window=5)
+        ax1.plot(dates[-len(ma5):],ma5)
+
+    if indicators is not None and 'ma12' in indicators:
+        ma12 = sma(close_prices,window=12)
+        ax1.plot(dates[-len(ma12):],ma12)
+
+    if indicators is not None and 'bollinger' in indicators:
+        middle,upper,lower = bollinger_bands(close_prices)
+        ax1.plot(dates[-len(middle):],middle)
+        ax1.plot(dates[-len(upper):],upper)
+        ax1.plot(dates[-len(lower):],lower)
+    if indicators is not None and 'macd' in indicators:
         macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(close_prices)
-        ax1.plot(dates[-len(ma_long):],ma_long)
-        ax1.plot(dates[-len(ma_short):],ma_short)
-
         ax2.plot(dates[-len(macd_line):],macd_line)
         ax2.plot(dates[-len(macd_signal):],macd_signal)
         ax2.bar(dates[-len(macd_hist):],macd_hist)
         ax2.axes.yaxis.set_ticklabels([])
-
         plt.ylabel('MACD')
-    elif indicator_type == 'rsi':
+    elif indicators is not None and 'rsi' in indicators:
         r,s = rsi(close_prices)
         ax2.plot(dates[-len(r):],r)
         ax2.plot(dates[-len(s):],s)
         plt.ylabel('RSI')
     else:
         plt.ylabel('Volumes')
+        # ax2.bar(dates[-len(volumes):],volumes)
         ax2.axes.yaxis.set_ticklabels([])
 
     fig.subplots_adjust(hspace=0)

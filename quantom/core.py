@@ -128,6 +128,8 @@ class Context(object):
         self.cash = initial_capital
         self.do_portfolio_valuation = trading_system._do_portfolio_valuation
         self.order = trading_system._order
+        self.buying_history = pd.DataFrame([])
+        self.selling_history = pd.DataFrame([])
 
     def __str__(self):
         msg = '>>>>>> Context >>>>>\n'
@@ -199,6 +201,7 @@ class TradingSystem(object):
 
         for order in self._order_queue:
 
+            date = self._data[order.symbol.get_sid()]['open'].index.values[self._current_time_index]
             open_price = self._data[order.symbol.get_sid()]['open'][self._current_time_index]
             high_price = self._data[order.symbol.get_sid()]['high'][self._current_time_index]
             low_price = self._data[order.symbol.get_sid()]['low'][self._current_time_index]
@@ -236,6 +239,7 @@ class TradingSystem(object):
                     self._context.cash_used_for_buying += cash_used_for_buying
                     self._context.cash -= cash_used_for_buying
                     self._context.portfolio.add_asset(order.symbol,order.amount,adjust_buying_price)
+                    self._context.buying_history = self._context.buying_history.append(pd.DataFrame([adjust_buying_price],index=[date]))
                 else:
                     print 'not enough cash to buy : %s , amount = %d' % (order.symbol,order.amount)
             else:
@@ -249,6 +253,7 @@ class TradingSystem(object):
                     self._context.cash_obtained_from_selling += cash_obtained_from_selling
                     self._context.cash += cash_obtained_from_selling
                     self._context.portfolio.sub_asset(order.symbol,order.amount)
+                    self._context.selling_history = self._context.selling_history.append(pd.DataFrame([adjust_selling_price],index=[date]))
                 else:
                     print 'not enough shares to sell : %s , amount = %d' % (order.symbol,order.amount)
 

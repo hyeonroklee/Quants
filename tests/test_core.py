@@ -27,4 +27,5 @@ if __name__ == '__main__':
     ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close)
     ts.run(data)
     print str(ts._context)
-    show_chart(data['AAPL'])
+
+    show_chart(data['AAPL'],indicators=['ma5','ma12'],buying_prices=ts._context.buying_history,selling_prices=ts._context.selling_history)
