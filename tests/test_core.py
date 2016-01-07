@@ -28,4 +28,4 @@ if __name__ == '__main__':
     ts.run(data)
     print str(ts._context)
 
-    show_chart(data['AAPL'],indicators=['ma5','ma12'],buying_prices=ts._context.buying_history,selling_prices=ts._context.selling_history)
+    show_chart(data['AAPL'],indicators=['bollinger','macd'],buying_prices=ts._context.buying_history,selling_prices=ts._context.selling_history)

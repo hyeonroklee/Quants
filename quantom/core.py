@@ -128,8 +128,8 @@ class Context(object):
         self.cash = initial_capital
         self.do_portfolio_valuation = trading_system._do_portfolio_valuation
         self.order = trading_system._order
-        self.buying_history = pd.DataFrame([])
-        self.selling_history = pd.DataFrame([])
+        self.buying_history = pd.Series([])
+        self.selling_history = pd.Series([])
 
     def __str__(self):
         msg = '>>>>>> Context >>>>>\n'
@@ -166,12 +166,12 @@ class TradingSystem(object):
         self._data = data
         self._initialize(self._context)
 
-        for i in range(1,self._data.shape[1]):
+        for i in range(0,self._data.shape[1]):
             cut_off_data1 = {}
             cut_off_data2 = {}
             for sym in self._data:
-                cut_off_data1[sym] = self._data[sym][:i-1]
-                cut_off_data2[sym] = self._data[sym][:i]
+                cut_off_data1[sym] = self._data[sym][:i]
+                cut_off_data2[sym] = self._data[sym][:i+1]
             new_data1 = pd.Panel(cut_off_data1)
             new_data2 = pd.Panel(cut_off_data2)
 
@@ -231,7 +231,7 @@ class TradingSystem(object):
 
             if order.amount >= 0:
                 if adjust_buying_price < 0:
-                    print 'buying order hasnt been executed : %s , %s ' % (order.style,adjust_buying_price)
+                    print '(%s) buying order hasnt been executed : %s , %s ' % (date,order.style,adjust_buying_price)
                     continue
 
                 cash_used_for_buying = adjust_buying_price * order.amount
@@ -239,12 +239,12 @@ class TradingSystem(object):
                     self._context.cash_used_for_buying += cash_used_for_buying
                     self._context.cash -= cash_used_for_buying
                     self._context.portfolio.add_asset(order.symbol,order.amount,adjust_buying_price)
-                    self._context.buying_history = self._context.buying_history.append(pd.DataFrame([adjust_buying_price],index=[date]))
+                    self._context.buying_history = self._context.buying_history.append(pd.Series([adjust_buying_price],index=[date]))
                 else:
-                    print 'not enough cash to buy : %s , amount = %d' % (order.symbol,order.amount)
+                    print '(%s) not enough cash to buy : %s , amount = %d' % (date,order.symbol,order.amount)
             else:
                 if adjust_selling_price < 0:
-                    print 'selling order hasnt been executed : %s , %s ' % (order.style,adjust_selling_price)
+                    print '(%s) selling order hasnt been executed : %s , %s ' % (date,order.style,adjust_selling_price)
                     continue
 
                 order.amount = np.abs(order.amount)
@@ -253,8 +253,8 @@ class TradingSystem(object):
                     self._context.cash_obtained_from_selling += cash_obtained_from_selling
                     self._context.cash += cash_obtained_from_selling
                     self._context.portfolio.sub_asset(order.symbol,order.amount)
-                    self._context.selling_history = self._context.selling_history.append(pd.DataFrame([adjust_selling_price],index=[date]))
+                    self._context.selling_history = self._context.selling_history.append(pd.Series([adjust_selling_price],index=[date]))
                 else:
-                    print 'not enough shares to sell : %s , amount = %d' % (order.symbol,order.amount)
+                    print '(%s) not enough shares to sell : %s , amount = %d' % (date,order.symbol,order.amount)
 
         self._order_queue = []

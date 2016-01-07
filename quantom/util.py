@@ -178,21 +178,21 @@ def show_chart(prices,indicators=['macd','bollinger'],buying_prices=None,selling
     ax2 = plt.subplot2grid((5,4),(4,0),sharex=ax1,rowspan=1,colspan=4)
     ax2.grid(True)
 
-    if buying_prices is not None:
-        dx, dy = -6/72., 0.
+    if buying_prices is not None and len(buying_prices) > 0:
+        dx, dy = -3/72., 0.
         offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
         shadow_transform = ax1.transData + offset
 
         buying_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in buying_prices.index.values]
-        ax1.plot(buying_dates,buying_prices[0].values,'r>',transform=shadow_transform)
+        ax1.plot(buying_dates,buying_prices.values,'r>',transform=shadow_transform)
 
-    if selling_prices is not None:
-        dx, dy = +6/72., 0.
+    if selling_prices is not None and len(selling_prices) > 0:
+        dx, dy = +3/72., 0.
         offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
         shadow_transform = ax1.transData + offset
 
         selling_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in selling_prices.index.values]
-        ax1.plot(selling_dates,selling_prices[0].values,'b<',transform=shadow_transform)
+        ax1.plot(selling_dates,selling_prices.values,'b<',transform=shadow_transform)
 
     if indicators is not None and 'ma5' in indicators:
         ma5 = sma(close_prices,window=5)
