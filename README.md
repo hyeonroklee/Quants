@@ -1,5 +1,5 @@
 ##Quants
-Stock Market Simulator / Trading Testing Platform
+Stock Market Simulator / Automatic Trading Testing Platform
 
 ##Dependencies
 - numpy
