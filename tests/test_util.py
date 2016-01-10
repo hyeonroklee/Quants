@@ -8,48 +8,8 @@ import matplotlib.pyplot as plt
 from quantom import *
 
 if __name__ == '__main__':
-    # cov=[[0.0004,0.0002,0.0002],
-    #      [0.0002,0.0004,0.0002],
-    #      [0.0002,0.0002,0.0004]]
+    stock_prices = pd.Series([1,2,3,4,5,6,7],index=['20110101','20110102','20110103','20110104','20110105','20110106','20110107'],dtype=float)
+    market_prices = pd.Series([1,2,3,4,5,6,7],index=['20110101','20110102','20110103','20110104','20110105','20110106','20110107'],dtype=float)
 
-    d = generate_stocks(n=30)
-    close_prices = d['AAPL']['close']
-    open_prices = d['AAPL']['open']
-
-    buying_prices = None
-    selling_prices = None
-
-    for i in range(len(close_prices)):
-        if np.random.randint(0,2) > 0:
-            if buying_prices is None:
-                buying_prices = pd.DataFrame([close_prices.values[i]],index=[close_prices.index.values[i]])
-            else:
-                buying_prices = buying_prices.append(pd.DataFrame([close_prices.values[i]],index=[close_prices.index.values[i]]))
-
-    for i in range(len(open_prices)):
-        if np.random.randint(0,2) > 0:
-            if selling_prices is None:
-                selling_prices = pd.DataFrame([open_prices.values[i]],index=[open_prices.index.values[i]])
-            else:
-                selling_prices = selling_prices.append(pd.DataFrame([open_prices.values[i]],index=[open_prices.index.values[i]]))
-
-    print selling_prices
-
-    # r,s = rsi(d['AAPL']['close'])
-    # print r
-    #
-    # port_weights, port_rets, port_vars = optimize_portfolio(d)
-    # print port_weights
-
-    # plt.plot(port_vars,port_rets)
-    # plt.show()
-
-
-    # ret_close_prices = compute_return(close_prices)
-    # print len(close_prices),len(ret_close_prices)
-    # print np.mean(ret_close_prices), np.var(ret_close_prices)
-    # np.cov
-
-    show_chart(d['AAPL'],indicators=None,buying_prices=buying_prices,selling_prices=selling_prices)
-    # show_chart(s2)
-    # show_chart(s3)
+    beta,alpha = calculate_alpha_beta_of_capm(stock_prices,market_prices)
+    print beta,alpha

@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import scipy.optimize as opt
+from sklearn.datasets import samples_generator
+from sklearn.cross_validation import train_test_split,cross_val_score
+from sklearn.linear_model import LinearRegression,LogisticRegression
+from sklearn.svm import SVC
 import urllib as ul
 
 import matplotlib.pyplot as plt
@@ -53,7 +57,7 @@ def rsi(prices,window=14,signal=9):
         rsi_ind.append(100 - 100/(1+up_avarage/np.abs(down_avarage)))
     return np.array(rsi_ind),sma(rsi_ind,signal)
 
-def compute_return(prices):
+def calculate_return(prices):
     prices = np.array(prices,dtype=float)
     return (prices[1:] - prices[:-1]) / prices[:-1]
 
@@ -176,7 +180,11 @@ def get_stock_prices_from_google(symbol,start_date,end_date):
     return result
 
 def calculate_alpha_beta_of_capm(stock_prices,market_prices):
-    pass
+    stock_ret = stock_prices.pct_change().values[1:]
+    market_ret = market_prices.pct_change().values[1:]
+    predictor = LinearRegression()
+    predictor.fit(np.matrix(stock_ret).T,np.matrix(market_ret).T)
+    return predictor.coef_,predictor.intercept_
 
 def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,selling_history=None):
 
