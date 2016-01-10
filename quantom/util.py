@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import scipy.optimize as opt
+import urllib as ul
 
 import matplotlib.pyplot as plt
 import matplotlib.finance as mfinance
@@ -156,7 +157,28 @@ def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=
 
     return pd.DataFrame(np.matrix([open_prices,high_prices,low_prices,close_prices,volumes]).T.tolist(),columns=['open','high','low','close','volumes'],index=dates)
 
-def show_chart(prices,indicators=['macd','bollinger'],buying_prices=None,selling_prices=None):
+def get_stock_prices_from_google(symbol,start_date,end_date):
+    sym = symbol.upper()
+    start = dt.date(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
+    end = dt.date(int(end_date[0:4]),int(end_date[5:7]),int(end_date[8:10]))
+    url_string = "http://www.google.com/finance/historical?q={0}".format(sym)
+    url_string += "&startdate={0}&enddate={1}&output=csv".format(start.strftime('%b %d, %Y'),end.strftime('%b %d, %Y'))
+    csv = ul.urlopen(url_string).readlines()
+    csv.reverse()
+
+    result = pd.DataFrame([],columns=['open','high','low','close','volumes'])
+    for bar in xrange(0,len(csv)-1):
+        _date, _open, _high , _low, _close, _volume = csv[bar].rstrip().split(',')
+        open_price, high_price, low_price, close_price = [float(x) for x in [_open,_high,_low,_close]]
+        date = dt.datetime.strftime(dt.datetime.strptime(_date,'%d-%b-%y'),'%Y%m%d')
+        result = result.append(pd.DataFrame([[open_price,high_price,low_price,close_price,_volume]],columns=['open','high','low','close','volumes'],index=[date]))
+
+    return result
+
+def calculate_alpha_beta_of_capm(stock_prices,market_prices):
+    pass
+
+def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,selling_history=None):
 
     dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in prices.index.values]
     open_prices = prices['open']
@@ -178,21 +200,21 @@ def show_chart(prices,indicators=['macd','bollinger'],buying_prices=None,selling
     ax2 = plt.subplot2grid((5,4),(4,0),sharex=ax1,rowspan=1,colspan=4)
     ax2.grid(True)
 
-    if buying_prices is not None and len(buying_prices) > 0:
+    if buying_history is not None and len(buying_history) > 0:
         dx, dy = -3/72., 0.
         offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
         shadow_transform = ax1.transData + offset
 
-        buying_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in buying_prices.index.values]
-        ax1.plot(buying_dates,buying_prices.values,'r>',transform=shadow_transform)
+        buying_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in buying_history.index.values]
+        ax1.plot(buying_dates,buying_history.values,'r>',transform=shadow_transform)
 
-    if selling_prices is not None and len(selling_prices) > 0:
+    if selling_history is not None and len(selling_history) > 0:
         dx, dy = +3/72., 0.
         offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
         shadow_transform = ax1.transData + offset
 
-        selling_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in selling_prices.index.values]
-        ax1.plot(selling_dates,selling_prices.values,'b<',transform=shadow_transform)
+        selling_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in selling_history.index.values]
+        ax1.plot(selling_dates,selling_history.values,'b<',transform=shadow_transform)
 
     if indicators is not None and 'ma5' in indicators:
         ma5 = sma(close_prices,window=5)
