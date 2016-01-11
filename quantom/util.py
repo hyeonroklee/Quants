@@ -104,7 +104,7 @@ def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initia
     stocks = {}
     for symbol in symbols:
         stocks[symbol] = []
-    dates = [(start_date + dt.timedelta(days=i)).strftime('%Y%m%d') for i in range(n)]
+    dates = [ start_date + dt.timedelta(days=i) for i in range(n)]
 
     for i in np.arange(0,n):
         r = np.random.multivariate_normal(mean,cov,size=4)
@@ -144,7 +144,7 @@ def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=
     close_prices = [start_price]
     volumes = [initial_volume]
 
-    dates = [ (start_date + dt.timedelta(days=i)).strftime('%Y%m%d') for i in range(n) ]
+    dates = [ start_date + dt.timedelta(days=i) for i in range(n) ]
 
     for i in np.arange(1,n):
         prices = []
@@ -161,7 +161,7 @@ def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=
 
     return pd.DataFrame(np.matrix([open_prices,high_prices,low_prices,close_prices,volumes]).T.tolist(),columns=['open','high','low','close','volumes'],index=dates)
 
-def get_stock_prices_from_google(symbol,start_date,end_date):
+def get_stock_prices_from_google(symbol='AAPL',start_date='2015-06-04',end_date='2016-01-08'):
     sym = symbol.upper()
     start = dt.date(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
     end = dt.date(int(end_date[0:4]),int(end_date[5:7]),int(end_date[8:10]))
@@ -174,10 +174,16 @@ def get_stock_prices_from_google(symbol,start_date,end_date):
     for bar in xrange(0,len(csv)-1):
         _date, _open, _high , _low, _close, _volume = csv[bar].rstrip().split(',')
         open_price, high_price, low_price, close_price = [float(x) for x in [_open,_high,_low,_close]]
-        date = dt.datetime.strftime(dt.datetime.strptime(_date,'%d-%b-%y'),'%Y%m%d')
+        date = dt.datetime.strptime(_date,'%d-%b-%y')
         result = result.append(pd.DataFrame([[open_price,high_price,low_price,close_price,_volume]],columns=['open','high','low','close','volumes'],index=[date]))
 
     return result
+
+def get_stock_prices_from_csv(name):
+    dateparse = lambda x: dt.datetime.strptime(x, '%Y%m%d')
+    return pd.read_csv(name,index_col='date',usecols=['date','open','high','low','close','volume'],parse_dates=['date'],date_parser=dateparse,
+                       dtype={'open':np.float32,'high':np.float32,'low':np.float32,'close':np.float32,'volume':np.int32})
+
 
 def calculate_alpha_beta_of_capm(stock_prices,market_prices):
     stock_ret = stock_prices.pct_change().values[1:]
@@ -188,12 +194,12 @@ def calculate_alpha_beta_of_capm(stock_prices,market_prices):
 
 def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,selling_history=None):
 
-    dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in prices.index.values]
+    dates = [ mdates.date2num(date) for date in prices.index]
     open_prices = prices['open']
     high_prices = prices['high']
     low_prices = prices['low']
     close_prices = prices['close']
-    volumes = prices['volumes']
+    volumes = prices['volume'] if 'volume' in prices.columns else None
 
     chart_data = np.matrix([dates,open_prices,high_prices,low_prices,close_prices]).T.tolist()
 
@@ -213,7 +219,7 @@ def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,sellin
         offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
         shadow_transform = ax1.transData + offset
 
-        buying_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in buying_history.index.values]
+        buying_dates = [ mdates.date2num(date) for date in buying_history.index]
         ax1.plot(buying_dates,buying_history.values,'r>',transform=shadow_transform)
 
     if selling_history is not None and len(selling_history) > 0:
@@ -221,7 +227,7 @@ def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,sellin
         offset = mtransforms.ScaledTranslation(dx, dy,fig.dpi_scale_trans)
         shadow_transform = ax1.transData + offset
 
-        selling_dates = [ mdates.date2num(dt.datetime.strptime(date,'%Y%m%d')) for date in selling_history.index.values]
+        selling_dates = [ mdates.date2num(date) for date in selling_history.index]
         ax1.plot(selling_dates,selling_history.values,'b<',transform=shadow_transform)
 
     if indicators is not None and 'ma5' in indicators:
@@ -249,9 +255,9 @@ def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,sellin
         ax2.plot(dates[-len(r):],r)
         ax2.plot(dates[-len(s):],s)
         plt.ylabel('RSI')
-    else:
-        plt.ylabel('Volumes')
-        # ax2.bar(dates[-len(volumes):],volumes)
+    elif volumes is not None:
+        plt.ylabel('Volume')
+        ax2.bar(dates[-len(volumes):],volumes)
         ax2.axes.yaxis.set_ticklabels([])
 
     fig.subplots_adjust(hspace=0)

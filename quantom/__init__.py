@@ -6,7 +6,9 @@ from core import (
 from util import (
     sma,ema,macd,bollinger_bands,rsi,
     generate_stock_prices,generate_stocks,
-    get_stock_prices_from_google,calculate_alpha_beta_of_capm,
+    get_stock_prices_from_google,
+    get_stock_prices_from_csv,
+    calculate_alpha_beta_of_capm,
     show_chart,
     calculate_return,optimize_portfolio
 )
@@ -23,6 +25,7 @@ __all__ = [
     'generate_stock_prices',
     'generate_stocks',
     'get_stock_prices_from_google',
+    'get_stock_prices_from_csv',
     'calculate_alpha_beta_of_capm',
     'sma',
     'ema',

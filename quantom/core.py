@@ -156,7 +156,7 @@ class TradingSystem(object):
         self._before_market_open = kwargs.get('before_market_open')
         self._after_market_close = kwargs.get('after_market_close')
 
-        self._context = Context(self)
+        self._context = Context(self,initial_capital=kwargs.get('initial_capital') if 'initial_capital' in kwargs else 10000.)
         self._current_time_index = 0
 
         self._order_queue = []
