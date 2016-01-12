@@ -249,6 +249,7 @@ class TradingSystem(object):
 
                 order.amount = np.abs(order.amount)
                 cash_obtained_from_selling = adjust_selling_price * order.amount
+                cash_obtained_from_selling -= cash_obtained_from_selling * 0.0033 # tax + transaction fee
                 if self._context.portfolio.has_asset(order.symbol) and self._context.portfolio.get_asset_amount(order.symbol) >= order.amount:
                     self._context.cash_obtained_from_selling += cash_obtained_from_selling
                     self._context.cash += cash_obtained_from_selling

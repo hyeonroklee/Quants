@@ -135,8 +135,9 @@ def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initia
 
     return pd.Panel(ss)
 
-def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=1000000,start_date=dt.datetime.today()):
+def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=1000000,start_date='2015-06-04'):
     start_price = np.round(price,pos)
+    start = dt.datetime(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
 
     open_prices = [start_price]
     high_prices = [start_price]
@@ -144,7 +145,7 @@ def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=
     close_prices = [start_price]
     volumes = [initial_volume]
 
-    dates = [ start_date + dt.timedelta(days=i) for i in range(n) ]
+    dates = [ start + dt.timedelta(days=i) for i in range(n) ]
 
     for i in np.arange(1,n):
         prices = []
@@ -159,7 +160,7 @@ def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=
         close_prices.append(prices[3])
         volumes = np.append(volumes,volumes[i-1])
 
-    return pd.DataFrame(np.matrix([open_prices,high_prices,low_prices,close_prices,volumes]).T.tolist(),columns=['open','high','low','close','volumes'],index=dates)
+    return pd.DataFrame(np.matrix([open_prices,high_prices,low_prices,close_prices,volumes]).T.tolist(),columns=['open','high','low','close','volume'],index=dates)
 
 def get_stock_prices_from_google(symbol='AAPL',start_date='2015-06-04',end_date='2016-01-08'):
     sym = symbol.upper()
@@ -170,12 +171,12 @@ def get_stock_prices_from_google(symbol='AAPL',start_date='2015-06-04',end_date=
     csv = ul.urlopen(url_string).readlines()
     csv.reverse()
 
-    result = pd.DataFrame([],columns=['open','high','low','close','volumes'])
+    result = pd.DataFrame([],columns=['open','high','low','close','volume'])
     for bar in xrange(0,len(csv)-1):
         _date, _open, _high , _low, _close, _volume = csv[bar].rstrip().split(',')
         open_price, high_price, low_price, close_price = [float(x) for x in [_open,_high,_low,_close]]
         date = dt.datetime.strptime(_date,'%d-%b-%y')
-        result = result.append(pd.DataFrame([[open_price,high_price,low_price,close_price,_volume]],columns=['open','high','low','close','volumes'],index=[date]))
+        result = result.append(pd.DataFrame([[open_price,high_price,low_price,close_price,_volume]],columns=['open','high','low','close','volume'],index=[date]))
 
     return result
 

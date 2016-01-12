@@ -23,9 +23,14 @@ def after_market_close(context,data):
     pass
 
 if __name__ == '__main__':
-    # data = generate_stocks(n=100,price=10.)
-    data = pd.Panel( { 'AAPL' : get_stock_prices_from_google() } )
-    # data = pd.Panel( { 'AAPL' : get_stock_prices_from_csv('../data/stocks/a.csv') } )
+
+    # d = generate_stock_prices(n=100)
+    # d = get_stock_prices_from_google()
+    # d = get_stock_prices_from_csv('../data/stocks/a.csv')
+
+    # data = pd.Panel( { 'AAPL' : generate_stock_prices(n=100) } )
+    # data = pd.Panel( { 'AAPL' : get_stock_prices_from_google() } )
+    data = pd.Panel( { 'AAPL' : get_stock_prices_from_csv('../data/stocks/a.csv') } )
 
     ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close,initial_capital=100000000.)
     ts.run(data)
