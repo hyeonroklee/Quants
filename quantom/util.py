@@ -14,12 +14,14 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
 
-def sma(prices,window=5):
+def sma(prices,window=5,limit=None):
     prices = np.array(prices,dtype=float)
     moving_average = []
-    for i in range(window,len(prices)+1):
+    for i in range(window,len(prices)+1)[::-1]:
         moving_average.append(np.mean(prices[i-window:i]))
-    return np.array(moving_average)
+        if limit is not None and len(moving_average) >= limit:
+            break
+    return np.array(moving_average[::-1])
 
 def ema(prices,window=5):
     pass
@@ -100,11 +102,13 @@ def optimize_portfolio(prices):
 
     return ws,rets,vars
 
-def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date=dt.datetime.today()):
+def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date='2015-06-04'):
     stocks = {}
     for symbol in symbols:
         stocks[symbol] = []
-    dates = [ start_date + dt.timedelta(days=i) for i in range(n)]
+
+    start = dt.datetime(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
+    dates = [ start + dt.timedelta(days=i) for i in range(n)]
 
     for i in np.arange(0,n):
         r = np.random.multivariate_normal(mean,cov,size=4)
@@ -193,7 +197,7 @@ def calculate_alpha_beta_of_capm(stock_prices,market_prices):
     predictor.fit(np.matrix(stock_ret).T,np.matrix(market_ret).T)
     return predictor.coef_,predictor.intercept_
 
-def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,selling_history=None):
+def show_chart(prices,indicators=['macd','bollinger'],moving_average=None,buying_history=None,selling_history=None):
 
     dates = [ mdates.date2num(date) for date in prices.index]
     open_prices = prices['open']
@@ -231,13 +235,10 @@ def show_chart(prices,indicators=['macd','bollinger'],buying_history=None,sellin
         selling_dates = [ mdates.date2num(date) for date in selling_history.index]
         ax1.plot(selling_dates,selling_history.values,'b<',transform=shadow_transform)
 
-    if indicators is not None and 'ma5' in indicators:
-        ma5 = sma(close_prices,window=5)
-        ax1.plot(dates[-len(ma5):],ma5)
-
-    if indicators is not None and 'ma12' in indicators:
-        ma12 = sma(close_prices,window=12)
-        ax1.plot(dates[-len(ma12):],ma12)
+    if moving_average is not None:
+        for w in moving_average:
+            ma = sma(close_prices,w)
+            ax1.plot(dates[-len(ma):],ma)
 
     if indicators is not None and 'bollinger' in indicators:
         middle,upper,lower = bollinger_bands(close_prices)

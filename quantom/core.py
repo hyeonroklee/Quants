@@ -166,7 +166,7 @@ class TradingSystem(object):
         self._data = data
         self._initialize(self._context)
 
-        for i in range(0,self._data.shape[1]):
+        for i in range(1,self._data.shape[1]):
             cut_off_data1 = {}
             cut_off_data2 = {}
             for sym in self._data:
@@ -176,9 +176,18 @@ class TradingSystem(object):
             new_data2 = pd.Panel(cut_off_data2)
 
             self._current_time_index = i
-            self._before_market_open(self._context,new_data1)
-            self._execute_orders()
-            self._after_market_close(self._context,new_data2)
+            try:
+                self._before_market_open(self._context,new_data1)
+            except Exception as e:
+                print "ERROR before_market_open : %s " % str(e)
+            try:
+                self._execute_orders()
+            except Exception as e:
+                print "ERROR execute_orders : %s " % str(e)
+            try:
+                self._after_market_close(self._context,new_data2)
+            except Exception as e:
+                print "ERROR after_market_close : %s " % str(e)
 
     def _order(self,symbol,amount,style=MarketOrder()):
         order = Order()

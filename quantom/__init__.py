@@ -13,6 +13,10 @@ from util import (
     calculate_return,optimize_portfolio
 )
 
+from strategy import (
+    GoldenDeathCross
+)
+
 __all__ = [
     'Symbol',
     'Asset',
@@ -34,5 +38,6 @@ __all__ = [
     'rsi',
     'show_chart',
     'calculate_return',
-    'optimize_portfolio'
+    'optimize_portfolio',
+    'GoldenDeathCross'
 ]
