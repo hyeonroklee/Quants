@@ -38,3 +38,10 @@ class GoldenDeathCross(Strategy):
             return True
         return False
 
+class MACDCross(Strategy):
+    def __init__(self,short=12,long=26,signal=9):
+        super(MACDCross,self).__init__()
+
+class RSICross(Strategy):
+    def __init__(self,window=14,singal=9):
+        super(RSICross).__init__()

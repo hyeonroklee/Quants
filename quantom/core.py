@@ -46,21 +46,33 @@ class Symbol(object):
         return 'symbol = %s ' % self._sid
 
 class Asset(object):
-    def __init__(self,symbol,amount=0,price=0.):
+    def __init__(self,symbol,amount=0,price=0):
         super(Asset,self).__init__()
         self._symbol = symbol
         self._avg_price = float(price)
-        self._amount = int(amount)
+        self._total_amount = int(amount)
+        self._total_profit = 0.
+        self._total_buying_price = float(price) * amount
+        self._total_selling_price = 0.
+        print '[buy] avg_price %f total_amount %d buying_amount %d buying_price %f profit %f total_buying_price %f' % (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_buying_price)
 
-    def add(self,amount,price):
-        self._avg_price = ((self._avg_price * self._amount) + (float(price) * amount)) / (self._amount + amount)
-        self._amount += amount
+    def buy(self,amount,price):
+        self._avg_price = ((self._avg_price * self._total_amount) + (float(price) * amount)) / (self._total_amount + amount)
+        self._total_amount += amount
+        self._total_buying_price += (float(price) * amount)
+        print '[buy] avg_price %f total_amount %d buying_amount %d buying_price %f profit %f total_buying_price %f' % (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_buying_price)
 
-    def sub(self,amount):
-        self._amount -= amount
+    def sell(self,amount,price):
+        if self._total_amount < amount:
+            raise Exception('Not enough shares : %d < %d' % (self._total_amount, amount))
+        self._total_amount -= amount
+        self._total_profit += (price - self._avg_price) * amount
+        self._total_selling_price += (float(price) * amount)
+        print '[sell] avg_price %f total_amount %d selling_amount %d selling_price %f profit %f total_selling_price %f profit_rate %f' % \
+              (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_selling_price, self._total_profit / self._total_selling_price)
 
     def get_amount(self):
-        return self._amount
+        return self._total_amount
 
     def get_symbol(self):
         return self._symbol
@@ -68,25 +80,28 @@ class Asset(object):
     def get_avg_price(self):
         return self._avg_price
 
+    def get_profit(self):
+        return self._total_profit
+
     def __str__(self):
-        return str(self._symbol) + ' amount = %d ' % self._amount + ' avg = %f ' % self._avg_price
+        return str(self._symbol) + ' amount = %d ' % self._total_amount + ' avg = %f ' % self._avg_price
 
 class Portfolio(object):
     def __init__(self):
         super(Portfolio,self).__init__()
         self._assets = {}
 
-    def add_asset(self,symbol,amount,price):
+    def buy_asset(self,symbol,amount,price):
         sid = symbol.get_sid()
         if not self._assets.has_key(sid):
             self._assets[sid] = Asset(symbol,amount,price)
         else:
-            self._assets[sid].add(amount,price)
+            self._assets[sid].buy(amount,price)
 
-    def sub_asset(self,symbol,amount):
+    def sell_asset(self,symbol,amount,price):
         sid = symbol.get_sid()
         if self._assets.has_key(sid):
-            self._assets[sid].sub(amount)
+            self._assets[sid].sell(amount,price)
         else:
             raise Exception('No such asset in Portfolio : %s ' % symbol)
 
@@ -144,7 +159,8 @@ class Context(object):
 
         assets = self.portfolio.get_assets()
         for symbol in assets:
-            msg += '  ' + str(assets[symbol].get_symbol()) + ' ' + str(assets[symbol].get_amount()) + ' ' + str(assets[symbol].get_avg_price()) + '\n'
+            msg += '  ' + str(assets[symbol].get_symbol()) + ' ' + str(assets[symbol].get_amount()) + ' ' + \
+                   str(assets[symbol].get_avg_price()) + ' ' + str(assets[symbol].get_profit()) + '\n'
         msg += '<<<<<< Context <<<<<<'
         return msg
 
@@ -179,15 +195,18 @@ class TradingSystem(object):
             try:
                 self._before_market_open(self._context,new_data1)
             except Exception as e:
-                print "ERROR before_market_open : %s " % str(e)
+                # print str(e)
+                pass
             try:
                 self._execute_orders()
             except Exception as e:
-                print "ERROR execute_orders : %s " % str(e)
+                # print str(e)
+                pass
             try:
                 self._after_market_close(self._context,new_data2)
             except Exception as e:
-                print "ERROR after_market_close : %s " % str(e)
+                # print str(e)
+                pass
 
     def _order(self,symbol,amount,style=MarketOrder()):
         order = Order()
@@ -247,7 +266,7 @@ class TradingSystem(object):
                 if cash_used_for_buying <= self._context.cash:
                     self._context.cash_used_for_buying += cash_used_for_buying
                     self._context.cash -= cash_used_for_buying
-                    self._context.portfolio.add_asset(order.symbol,order.amount,adjust_buying_price)
+                    self._context.portfolio.buy_asset(order.symbol,order.amount,adjust_buying_price)
                     self._context.buying_history = self._context.buying_history.append(pd.Series([adjust_buying_price],index=[date]))
                 else:
                     print '(%s) not enough cash to buy : %s , amount = %d' % (date,order.symbol,order.amount)
@@ -257,12 +276,12 @@ class TradingSystem(object):
                     continue
 
                 order.amount = np.abs(order.amount)
+                adjust_selling_price += adjust_selling_price * 0.0033 # tax + transaction fee
                 cash_obtained_from_selling = adjust_selling_price * order.amount
-                cash_obtained_from_selling -= cash_obtained_from_selling * 0.0033 # tax + transaction fee
                 if self._context.portfolio.has_asset(order.symbol) and self._context.portfolio.get_asset_amount(order.symbol) >= order.amount:
                     self._context.cash_obtained_from_selling += cash_obtained_from_selling
                     self._context.cash += cash_obtained_from_selling
-                    self._context.portfolio.sub_asset(order.symbol,order.amount)
+                    self._context.portfolio.sell_asset(order.symbol,order.amount,adjust_selling_price)
                     self._context.selling_history = self._context.selling_history.append(pd.Series([adjust_selling_price],index=[date]))
                 else:
                     print '(%s) not enough shares to sell : %s , amount = %d' % (date,order.symbol,order.amount)
