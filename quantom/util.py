@@ -26,15 +26,15 @@ def sma(prices,window=5,limit=None):
 def ema(prices,window=5):
     pass
 
-def macd(prices,long=26,short=12,signal=9,ma=sma):
-    ma_long = ma(prices,long)
-    ma_short = ma(prices,short)
+def macd(prices,short=12,long=26,signal=9,limit=None):
+    ma_long = sma(prices,long)
+    ma_short = sma(prices,short)
     macd_line = ma_short[-len(ma_long):] - ma_long
-    macd_signal = ma(macd_line,signal)
+    macd_signal = sma(macd_line,signal)
     macd_hist = macd_line[-len(macd_signal):] - macd_signal
     return macd_line[-len(macd_signal):],macd_signal,macd_hist,ma_long[-len(macd_signal):],ma_short[-len(macd_signal):]
 
-def bollinger_bands(prices,middle=20):
+def bollinger_bands(prices,middle=20,limit=None):
     prices = np.array(prices,dtype=float)
     middle_band = []
     upper_band = []
@@ -48,7 +48,7 @@ def bollinger_bands(prices,middle=20):
 
     return np.array(middle_band),np.array(upper_band),np.array(lower_band)
 
-def rsi(prices,window=14,signal=9):
+def rsi(prices,window=14,signal=9,limit=None):
     rsi_ind = []
     prices = np.array(prices,dtype=float)
     for i in range(window,len(prices)+1):

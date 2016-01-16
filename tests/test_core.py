@@ -7,10 +7,11 @@ def initialize(context):
     pass
 
 def before_market_open(context,data):
-    s = GoldenDeathCross(5,12)
-    if s.isEntry(context,data['AAPL']):
+    s = GoldenDeathCross()
+    m = MACDCross()
+    if m.isEntry(context,data['AAPL']):
         context.order(Symbol('AAPL'),10,MarketOrder())
-    elif s.isExit(context,data['AAPL']):
+    elif m.isExit(context,data['AAPL']):
         context.order(Symbol('AAPL'),-10,MarketOrder())
 
 def after_market_close(context,data):

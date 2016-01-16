@@ -1,5 +1,5 @@
 
-from util import sma
+from util import sma,macd,rsi
 from abc import ABCMeta,abstractmethod
 
 class Strategy(object):
@@ -26,7 +26,7 @@ class GoldenDeathCross(Strategy):
         prices = data['close']
         short_ma = sma(prices,self.short,2)
         long_ma = sma(prices,self.long,2)
-        if short_ma[0] < long_ma[0] and short_ma[1] > long_ma[1]:
+        if short_ma[len(short_ma)-2] < long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] > long_ma[len(long_ma)-1]:
             return True
         return False
 
@@ -34,14 +34,27 @@ class GoldenDeathCross(Strategy):
         prices = data['close']
         short_ma = sma(prices,self.short,2)
         long_ma = sma(prices,self.long,2)
-        if short_ma[0] > long_ma[0] and short_ma[1] < long_ma[1]:
+        if short_ma[len(short_ma)-2] > long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] < long_ma[len(long_ma)-1]:
             return True
         return False
 
 class MACDCross(Strategy):
     def __init__(self,short=12,long=26,signal=9):
         super(MACDCross,self).__init__()
+        self._short = short
+        self._long = long
+        self._signal = signal
 
-class RSICross(Strategy):
-    def __init__(self,window=14,singal=9):
-        super(RSICross).__init__()
+    def isEntry(self,context,data):
+        prices = data['close']
+        macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
+        if macd_hist[len(macd_hist)-2] < 0 and macd_hist[len(macd_hist)-1] > 0:
+            return True
+        return False
+
+    def isExit(self,context,data):
+        prices = data['close']
+        macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
+        if macd_hist[len(macd_hist)-2] > 0 and macd_hist[len(macd_hist)-1] < 0:
+            return True
+        return False

@@ -14,7 +14,8 @@ from util import (
 )
 
 from strategy import (
-    GoldenDeathCross
+    GoldenDeathCross,
+    MACDCross
 )
 
 __all__ = [
@@ -39,5 +40,6 @@ __all__ = [
     'show_chart',
     'calculate_return',
     'optimize_portfolio',
-    'GoldenDeathCross'
+    'GoldenDeathCross',
+    'MACDCross'
 ]
