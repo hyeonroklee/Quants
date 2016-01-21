@@ -1,6 +1,6 @@
 from core import (
     Symbol,Asset,Context,Portfolio,TradingSystem,
-    MarketOrder,LimitOrder,StopOrder
+    MarketOrder,LimitOrder
 )
 
 from util import (
@@ -26,7 +26,6 @@ __all__ = [
     'TradingSystem',
     'MarketOrder',
     'LimitOrder',
-    'StopOrder',
     'generate_stock_prices',
     'generate_stocks',
     'get_stock_prices_from_google',

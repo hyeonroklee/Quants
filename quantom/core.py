@@ -7,6 +7,9 @@ class MarketOrder(object):
     def __init__(self):
         super(MarketOrder,self).__init__()
 
+    def __str__(self):
+        return 'MarketOrder'
+
 class LimitOrder(object):
     def __init__(self,price):
         super(LimitOrder,self).__init__()
@@ -15,13 +18,8 @@ class LimitOrder(object):
     def get_price(self):
         return self._price
 
-class StopOrder(object):
-    def __init__(self,price):
-        super(StopOrder,self).__init__()
-        self._price = float(price)
-
-    def get_price(self):
-        return self._price
+    def __str__(self):
+        return 'LimitOrder %f' % self._price
 
 class Order(object):
     def __init__(self):
@@ -248,11 +246,18 @@ class TradingSystem(object):
             elif isinstance(order.style,LimitOrder):
                 ordered_price = order.style.get_price()
                 if low_price <= ordered_price:
-                    adjust_buying_price = ordered_price
+                    if ordered_price <= high_price:
+                        adjust_buying_price = ordered_price
+                    else:
+                        adjust_buying_price = high_price
                 if ordered_price <= high_price:
-                    adjust_selling_price = ordered_price
-            elif isinstance(order.style,StopOrder):
-                pass
+                    if low_price <= ordered_price:
+                        adjust_selling_price = ordered_price
+                    else:
+                        adjust_selling_price = low_price
+
+                print adjust_buying_price,adjust_selling_price
+
             else:
                 print 'Not support OrderStyle : %s ' % order.style
                 continue
@@ -276,12 +281,12 @@ class TradingSystem(object):
                     continue
 
                 order.amount = np.abs(order.amount)
-                adjust_selling_price += adjust_selling_price * 0.0033 # tax + transaction fee
-                cash_obtained_from_selling = adjust_selling_price * order.amount
+                adjust_selling_price_with_fee = adjust_selling_price - (adjust_selling_price * 0.0033) # tax + transaction fee
+                cash_obtained_from_selling = adjust_selling_price_with_fee * order.amount
                 if self._context.portfolio.has_asset(order.symbol) and self._context.portfolio.get_asset_amount(order.symbol) >= order.amount:
                     self._context.cash_obtained_from_selling += cash_obtained_from_selling
                     self._context.cash += cash_obtained_from_selling
-                    self._context.portfolio.sell_asset(order.symbol,order.amount,adjust_selling_price)
+                    self._context.portfolio.sell_asset(order.symbol,order.amount,adjust_selling_price_with_fee)
                     self._context.selling_history = self._context.selling_history.append(pd.Series([adjust_selling_price],index=[date]))
                 else:
                     print '(%s) not enough shares to sell : %s , amount = %d' % (date,order.symbol,order.amount)

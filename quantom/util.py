@@ -197,7 +197,7 @@ def calculate_alpha_beta_of_capm(stock_prices,market_prices):
     predictor.fit(np.matrix(stock_ret).T,np.matrix(market_ret).T)
     return predictor.coef_,predictor.intercept_
 
-def show_chart(prices,indicators=['macd','bollinger'],moving_average=None,buying_history=None,selling_history=None):
+def show_chart(prices,indicators=None,moving_average=None,buying_history=None,selling_history=None):
 
     dates = [ mdates.date2num(date) for date in prices.index]
     open_prices = prices['open']
