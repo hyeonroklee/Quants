@@ -7,6 +7,7 @@ Stock Market Simulator / Automatic Trading Testing Platform
 - scipy
 - matplotlib
 - sklearn
+- flask
 
 ##Author
 - HyeonRok Lee ( https://kr.linkedin.com/in/hyeonrok-lee-71300084 )
