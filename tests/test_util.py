@@ -1,12 +1,17 @@
 
-import numpy as np
-import pandas as pd
-import datetime as dt
-import scipy.optimize as opt
-import matplotlib.pyplot as plt
-
 from quantom import *
 
 if __name__ == '__main__':
-    d1 = get_stock_prices_from_csv('../data/stocks/a.csv')
-    d2 = generate_stock_prices()
+
+    # sma test cases
+    prices = [1,2,3,4]
+    t1 = sma(prices)
+    assert t1 is not None and len(t1) == 0
+    t2 = sma(prices,4)
+    assert t2 is not None and len(t2) == 1 and t2[0] == 2.5
+    t3 = sma(prices,2,1)
+    assert t3 is not None and len(t3) == 1 and t3[0] == 3.5
+
+    # ema test cases
+    prices = [1,2,4,8,16,32,64]
+    print ema(prices),sma(prices)

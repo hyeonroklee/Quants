@@ -52,13 +52,15 @@ class Asset(object):
         self._total_profit = 0.
         self._total_buying_price = float(price) * amount
         self._total_selling_price = 0.
-        print '[buy] avg_price %f total_amount %d buying_amount %d buying_price %f profit %f total_buying_price %f' % (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_buying_price)
+        print '[buy] avg_price %f total_amount %d buying_amount %d buying_price %f total_profit %f total_buying_price %f' % \
+              (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_buying_price)
 
     def buy(self,amount,price):
         self._avg_price = ((self._avg_price * self._total_amount) + (float(price) * amount)) / (self._total_amount + amount)
         self._total_amount += amount
         self._total_buying_price += (float(price) * amount)
-        print '[buy] avg_price %f total_amount %d buying_amount %d buying_price %f profit %f total_buying_price %f' % (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_buying_price)
+        print '[buy] avg_price %f total_amount %d buying_amount %d buying_price %f total_profit %f total_buying_price %f' % \
+              (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_buying_price)
 
     def sell(self,amount,price):
         if self._total_amount < amount:
@@ -66,8 +68,8 @@ class Asset(object):
         self._total_amount -= amount
         self._total_profit += (price - self._avg_price) * amount
         self._total_selling_price += (float(price) * amount)
-        print '[sell] avg_price %f total_amount %d selling_amount %d selling_price %f profit %f total_selling_price %f profit_rate %f' % \
-              (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_selling_price, self._total_profit / self._total_selling_price)
+        print '[sell] avg_price %f total_amount %d selling_amount %d selling_price %f total_profit %f total_selling_price %f ' % \
+              (self._avg_price, self._total_amount, amount, price, self._total_profit,self._total_selling_price)
 
     def get_amount(self):
         return self._total_amount

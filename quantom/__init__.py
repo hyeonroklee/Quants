@@ -15,7 +15,8 @@ from util import (
 
 from strategy import (
     GoldenDeathCross,
-    MACDCross
+    MACDCross,
+    SVMClassifier
 )
 
 __all__ = [
@@ -40,5 +41,6 @@ __all__ = [
     'calculate_return',
     'optimize_portfolio',
     'GoldenDeathCross',
-    'MACDCross'
+    'MACDCross',
+    'SVMClassifier'
 ]

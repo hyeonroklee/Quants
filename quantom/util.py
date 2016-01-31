@@ -23,8 +23,15 @@ def sma(prices,window=5,limit=None):
             break
     return np.array(moving_average[::-1])
 
-def ema(prices,window=5):
-    pass
+def ema(prices,window=5,limit=None):
+    prices = np.array(prices,dtype=float)
+    multiplier = (2./(window+1))
+    moving_average = []
+    if len(prices) >= window:
+        moving_average.append(np.sum(prices[0:window])/window)
+    for p in prices[window:]:
+        moving_average.append((p - moving_average[-1]) * multiplier + moving_average[-1])
+    return np.array(moving_average)
 
 def macd(prices,short=12,long=26,signal=9,limit=None):
     ma_long = sma(prices,long)
@@ -102,7 +109,7 @@ def optimize_portfolio(prices):
 
     return ws,rets,vars
 
-def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date='2015-06-04'):
+def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=100.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date='2015-06-04'):
     stocks = {}
     for symbol in symbols:
         stocks[symbol] = []
@@ -139,7 +146,7 @@ def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=10.,pos=2,initia
 
     return pd.Panel(ss)
 
-def generate_stock_prices(n=250,price=1,pos=2,min_price_bound=0.,initial_volume=1000000,start_date='2015-06-04'):
+def generate_stock_prices(n=250,price=100,pos=2,min_price_bound=0.,initial_volume=1000000,start_date='2015-06-04'):
     start_price = np.round(price,pos)
     start = dt.datetime(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
 
