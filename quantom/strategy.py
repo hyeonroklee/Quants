@@ -66,14 +66,14 @@ class MACDCross(Strategy):
         return False
 
 class SVMClassifier(Strategy):
-    def __init__(self,training_data,window=10,target=5):
+    def __init__(self,training_data,window=10,target=4):
         x = []
         y = []
-        prices = training_data['close'].values[1:]
-        ret_prices = training_data['close'].pct_change().values[1:]
-        for i in range(window,len(prices),window):
+        prices = training_data['open'].values[1:]
+        ret_prices = training_data['open'].pct_change().values[1:]
+        for i in range(window,len(prices)-target):
             x.append(ret_prices[i-window:i])
-            y.append(1 if prices[i-1] < prices[i+target] else 0)
+            y.append(1 if prices[i] < prices[i+target] else 0)
         x = np.array(x)
         y = np.array(y)
         scaler = StandardScaler().fit(x)
@@ -87,7 +87,7 @@ class SVMClassifier(Strategy):
 
     def isEnter(self,context,data):
         x = []
-        ret_prices = data['close'].pct_change().values[1:]
+        ret_prices = data['open'].pct_change().values[1:]
         if len(ret_prices) >= self._window:
             x.append(ret_prices[len(ret_prices)-self._window:len(ret_prices)])
             x = np.array(x)
