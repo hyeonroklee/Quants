@@ -4,29 +4,26 @@
         <script type="text/javascript" src="https://www.google.com/jsapi"></script>
         <script type="text/javascript">
             google.load("visualization", "1", {packages:["corechart"]});
-            google.setOnLoadCallback(drawChart);
+
             function drawChart() {
-            var data = google.visualization.arrayToDataTable([
-              {% for i in range(data|length) %}
-              ['{{data.index[i].strftime('%Y%m%d')}}', {{data['low'][i]}}, {{data['open'][i]}}, {{data['close'][i]}}, {{data['high'][i]}}],
-              {% endfor %}
-            ], true);
+                var data = google.visualization.arrayToDataTable([
+                  {% for i in range(data|length) %}
+                  ['{{data.index[i].strftime('%Y%m%d')}}', {{data['low'][i]}}, {{data['open'][i]}}, {{data['close'][i]}}, {{data['high'][i]}}],
+                  {% endfor %}
+                ], true);
 
-            var options = {
-              legend:'none',
-              candlestick: {
-                fallingColor: { stroke:'blue' , fill: 'blue' },
-                risingColor: { stroke:'red' , fill: 'red' }
-              }
-            };
+                var options = {
+                  legend:'none',
+                };
 
-            var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+                var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+                chart.draw(data, options);
+            }
 
-            chart.draw(data, options);
-          }
+            google.setOnLoadCallback(drawChart);
         </script>
 	</head>
 	<body>
-        <div id="chart_div" style="width: 1200px; height: 700px;"></div>
+        <div id="chart_div" style="width: 1200px; height: 700px; border-style: solid; border-width: 1px"></div>
 	</body>
 </html>
