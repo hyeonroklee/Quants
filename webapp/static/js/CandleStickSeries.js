@@ -1,11 +1,7 @@
 define ([
-    'd3',
-    'components/sl'
-], function (d3, sl) {
-    'use strict';
-
-    sl.series.candlestick = function () {
-
+    'd3'
+],function(d3) {
+    var CandleStickSeries = function() {
         var xScale = d3.time.scale(),
             yScale = d3.scale.linear();
 
@@ -123,6 +119,7 @@ define ([
         };
 
         return candlestick;
+    }
 
-    };
+    return CandleStickSeries;
 });

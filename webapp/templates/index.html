@@ -1,29 +1,23 @@
 <!DOCTYPE html>
 <html>
-	<head>
-        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-        <script type="text/javascript">
-            google.load("visualization", "1", {packages:["corechart"]});
-
-            function drawChart() {
-                var data = google.visualization.arrayToDataTable([
-                  {% for i in range(data|length) %}
-                  ['{{data.index[i].strftime('%Y%m%d')}}', {{data['low'][i]}}, {{data['open'][i]}}, {{data['close'][i]}}, {{data['high'][i]}}],
-                  {% endfor %}
-                ], true);
-
-                var options = {
-                  legend:'none',
-                };
-
-                var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
-                chart.draw(data, options);
-            }
-
-            google.setOnLoadCallback(drawChart);
-        </script>
-	</head>
-	<body>
-        <div id="chart_div" style="width: 1200px; height: 700px; border-style: solid; border-width: 1px"></div>
-	</body>
+<head>
+    <title>Quantom Home</title>
+    <link rel="stylesheet" href="../static/style/style.css" />
+    <script>
+        var data = [
+          {% for i in range(data|length) %}
+          { date  : new Date({{data.index[i].year}},{{data.index[i].month-1}},{{data.index[i].day}}),
+            open  : {{data['open'][i]}},
+            high  : {{data['high'][i]}},
+            low   : {{data['low'][i]}},
+            close : {{data['close'][i]}}
+          },
+          {% endfor %}
+        ];
+    </script>
+    <script data-main="../static/js/Quantom" src="../static/js/lib/require.js"></script>
+</head>
+<body>
+<div id="chart"></div>
+</body>
 </html>
