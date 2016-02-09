@@ -29,20 +29,6 @@ class Order(object):
     def get_id(self):
         return self.__hash__()
 
-class Symbol(object):
-    def __init__(self,sid):
-        super(Symbol,self).__init__()
-        self._sid = sid
-
-    def get_sid(self):
-        return self._sid
-
-    def __eq__(self, other):
-        return isinstance(other,Symbol) and other._sid == self._sid
-
-    def __str__(self):
-        return 'symbol = %s ' % self._sid
-
 class Asset(object):
     def __init__(self,symbol,amount=0,price=0):
         super(Asset,self).__init__()
@@ -92,30 +78,26 @@ class Portfolio(object):
         self._assets = {}
 
     def buy_asset(self,symbol,amount,price):
-        sid = symbol.get_sid()
-        if not self._assets.has_key(sid):
-            self._assets[sid] = Asset(symbol,amount,price)
+        if not self._assets.has_key(symbol):
+            self._assets[symbol] = Asset(symbol,amount,price)
         else:
-            self._assets[sid].buy(amount,price)
+            self._assets[symbol].buy(amount,price)
 
     def sell_asset(self,symbol,amount,price):
-        sid = symbol.get_sid()
-        if self._assets.has_key(sid):
-            self._assets[sid].sell(amount,price)
+        if self._assets.has_key(symbol):
+            self._assets[symbol].sell(amount,price)
         else:
             raise Exception('No such asset in Portfolio : %s ' % symbol)
 
     def has_asset(self,symbol):
-        sid = symbol.get_sid()
-        if self._assets.has_key(sid):
+        if self._assets.has_key(symbol):
             return True
         else:
             return False
 
     def get_asset_amount(self,symbol):
-        sid = symbol.get_sid()
-        if self._assets.has_key(sid):
-            return self._assets[sid].get_amount()
+        if self._assets.has_key(symbol):
+            return self._assets[symbol].get_amount()
         else:
             return 0
 
@@ -125,8 +107,8 @@ class Portfolio(object):
     def __str__(self):
         msg = ''
         if len(self._assets) > 0:
-            for sid in self._assets:
-                asset = self._assets[sid]
+            for symbol in self._assets:
+                asset = self._assets[symbol]
                 msg += str(asset) + '\n'
         else:
             msg += 'no assets in Portfolio'
@@ -195,17 +177,19 @@ class TradingSystem(object):
             try:
                 self._before_market_open(self._context,new_data1)
             except Exception as e:
-                # print str(e)
+                # print '[Error] before_market_open : ' + str(e)
                 pass
+
             try:
                 self._execute_orders()
             except Exception as e:
-                # print str(e)
+                # print '[Error] execute_orders : ' + str(e)
                 pass
+
             try:
                 self._after_market_close(self._context,new_data2)
             except Exception as e:
-                # print str(e)
+                # print '[Error] after_market_close : ' + str(e)
                 pass
 
     def _order(self,symbol,amount,style=MarketOrder()):
@@ -221,7 +205,7 @@ class TradingSystem(object):
         assets = self._context.portfolio.get_assets()
         for symbol in assets:
             asset = assets[symbol]
-            close_price = self._data[asset.get_symbol().get_sid()]['close'][self._current_time_index]
+            close_price = self._data[asset.get_symbol()]['close'][self._current_time_index]
             value += asset.get_amount() * close_price
         return value
 
@@ -229,11 +213,11 @@ class TradingSystem(object):
 
         for order in self._order_queue:
 
-            date = self._data[order.symbol.get_sid()]['open'].index.values[self._current_time_index]
-            open_price = self._data[order.symbol.get_sid()]['open'][self._current_time_index]
-            high_price = self._data[order.symbol.get_sid()]['high'][self._current_time_index]
-            low_price = self._data[order.symbol.get_sid()]['low'][self._current_time_index]
-            close_price = self._data[order.symbol.get_sid()]['close'][self._current_time_index]
+            date = self._data[order.symbol]['open'].index.values[self._current_time_index]
+            open_price = self._data[order.symbol]['open'][self._current_time_index]
+            high_price = self._data[order.symbol]['high'][self._current_time_index]
+            low_price = self._data[order.symbol]['low'][self._current_time_index]
+            close_price = self._data[order.symbol]['close'][self._current_time_index]
 
             if open_price <=0 or high_price <=0 or low_price <=0 or close_price <=0:
                 print 'price can not be under 0'

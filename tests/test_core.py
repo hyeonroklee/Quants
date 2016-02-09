@@ -4,15 +4,13 @@ from quantom import *
 import pandas as pd
 
 def initialize(context):
-    pass
+    context.strategy = MACDCross()
 
 def before_market_open(context,data):
-    s = GoldenDeathCross()
-    m = MACDCross()
-    if m.isEnter(context,data['AAPL']):
-        context.order(Symbol('AAPL'),10,MarketOrder())
-    elif m.isExit(context,data['AAPL']):
-        context.order(Symbol('AAPL'),-10,MarketOrder())
+    if context.strategy.isEnter(context,data['AAPL']):
+        context.order('AAPL',10,MarketOrder())
+    elif context.strategy.isExit(context,data['AAPL']):
+        context.order('AAPL',-10,MarketOrder())
 
 def after_market_close(context,data):
     pass

@@ -33,6 +33,28 @@ def ema(prices,window=5,limit=None):
         moving_average.append((p - moving_average[-1]) * multiplier + moving_average[-1])
     return np.array(moving_average)
 
+def willr(prices,window=10):
+    prices = np.array(prices,dtype=float)
+    wiilr_series = []
+    for i in range(window,len(prices)+1)[::-1]:
+        sub_prices = prices[i-window:i]
+        current = sub_prices[-1]
+        highest = np.max(sub_prices)
+        lowest = np.min(sub_prices)
+        if highest - lowest == 0:
+            wiilr_series.append(-100)
+        else:
+            wiilr_series.append(((highest - current) / (highest - lowest)) * -100)
+    return np.array(wiilr_series[::-1],dtype=float)
+
+def rocr(prices,window=10):
+    prices = np.array(prices,dtype=float)
+    rocr_series = []
+    for i in range(window,len(prices)+1)[::-1]:
+        sub_prices = prices[i-window:i]
+        rocr_series.append( (sub_prices[-1] / sub_prices[0] - 1) * 100 )
+    return np.array(rocr_series[::-1])
+
 def macd(prices,short=12,long=26,signal=9,limit=None):
     ma_long = sma(prices,long)
     ma_short = sma(prices,short)

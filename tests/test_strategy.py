@@ -8,16 +8,15 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 
-s = None
-
 def initialize(context):
-    pass
+    training_data = generate_stock_prices(n=500,price=initial_price)
+    context.strategy = SVMClassifier(training_data=training_data,window=20,target=5)
 
 def before_market_open(context,data):
-    if s.isEnter(context,data['AAPL']):
-        context.order(Symbol('AAPL'),10,MarketOrder())
-    elif s.isExit(context,data['AAPL']):
-        context.order(Symbol('AAPL'),-10,MarketOrder())
+    if context.strategy.isEnter(context,data['AAPL']):
+        context.order('AAPL',100,MarketOrder())
+    elif context.strategy.isExit(context,data['AAPL']):
+        context.order('AAPL',-100,MarketOrder())
 
 def after_market_close(context,data):
     pass
@@ -32,13 +31,9 @@ if __name__ == '__main__':
     # d = get_stock_prices_from_csv('../data/stocks/a.csv')
 
     # data = generate_stocks(n=300,price=15000)
-    data = pd.Panel( { 'AAPL' : generate_stock_prices(n=250,price=initial_price) } )
+    data = pd.Panel( { 'AAPL' : generate_stock_prices(n=500,price=initial_price) } )
     # data = pd.Panel( { 'AAPL' : get_stock_prices_from_google(symbol='AAPL') } )
     # data = pd.Panel( { 'AAPL' : get_stock_prices_from_csv('../data/stocks/a.csv') } )
-
-    s = SVMClassifier(training_data=data['AAPL'])
-
-    data = pd.Panel( { 'AAPL' : generate_stock_prices(n=100,price=initial_price) } )
 
     ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close,initial_capital=initial_capital)
     ts.run(data)

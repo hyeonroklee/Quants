@@ -13,5 +13,8 @@ if __name__ == '__main__':
     assert t3 is not None and len(t3) == 1 and t3[0] == 3.5
 
     # ema test cases
-    prices = [1,2,4,8,16,32,64]
-    print ema(prices),sma(prices)
+    prices = [1,32,4,8,16,32,64]
+    print ema(prices)
+    print sma(prices)
+    print willr(prices,2)
+    print rocr(prices,2)

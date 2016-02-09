@@ -1,10 +1,10 @@
 from core import (
-    Symbol,Asset,Context,Portfolio,TradingSystem,
+    Asset,Context,Portfolio,TradingSystem,
     MarketOrder,LimitOrder
 )
 
 from util import (
-    sma,ema,macd,bollinger_bands,rsi,
+    sma,ema,willr,rocr,macd,bollinger_bands,rsi,
     generate_stock_prices,generate_stocks,
     get_stock_prices_from_google,
     get_stock_prices_from_csv,
@@ -20,7 +20,6 @@ from strategy import (
 )
 
 __all__ = [
-    'Symbol',
     'Asset',
     'Context',
     'Portfolio',
@@ -34,6 +33,8 @@ __all__ = [
     'calculate_alpha_beta_of_capm',
     'sma',
     'ema',
+    'willr',
+    'rocr',
     'macd',
     'bollinger_bands',
     'rsi',
