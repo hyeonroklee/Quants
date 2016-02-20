@@ -16,7 +16,8 @@ from util import (
 from strategy import (
     GoldenDeathCross,
     MACDCross,
-    SVMClassifier
+    SVMClassifier,
+    NNClassifier
 )
 
 __all__ = [
@@ -43,5 +44,6 @@ __all__ = [
     'optimize_portfolio',
     'GoldenDeathCross',
     'MACDCross',
-    'SVMClassifier'
+    'SVMClassifier',
+    'NNClassifier'
 ]

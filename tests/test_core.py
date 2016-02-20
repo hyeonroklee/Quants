@@ -5,12 +5,13 @@ import pandas as pd
 
 def initialize(context):
     context.macd_strategy = MACDCross()
-    # context.svm_strategy = SVMClassifier(generate_stock_prices(n=300,price=context.initial_cash))
+    context.svm_strategy = SVMClassifier(generate_stock_prices(n=600,price=context.initial_cash))
+    context.nn_strategy = NNClassifier(generate_stock_prices(n=600,price=context.initial_cash))
 
 def before_market_open(context,data):
-    if context.macd_strategy.isEnter(context,data['AAPL']):
+    if context.nn_strategy.isEnter(context,data['AAPL']):
         context.order('AAPL',10,MarketOrder())
-    elif context.macd_strategy.isExit(context,data['AAPL']):
+    elif context.nn_strategy.isExit(context,data['AAPL']):
         context.order('AAPL',-10,MarketOrder())
 
 def after_market_close(context,data):
@@ -18,7 +19,7 @@ def after_market_close(context,data):
 
 if __name__ == '__main__':
 
-    initial_price = 15000
+    initial_price = 50000
     initial_cash =10000000
 
     # d = generate_stock_prices(n=100)
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     # d = get_stock_prices_from_csv('../data/stocks/a.csv')
 
     # data = generate_stocks(n=100,price=initial_price)
-    data = pd.Panel( { 'AAPL' : generate_stock_prices(n=100,price=initial_price) } )
+    data = pd.Panel( { 'AAPL' : generate_stock_prices(n=300,price=initial_price) } )
     # data = pd.Panel( { 'AAPL' : get_stock_prices_from_google(symbol='AAPL') } )
     # data = pd.Panel( { 'AAPL' : get_stock_prices_from_csv('../data/stocks/a.csv') } )
 
