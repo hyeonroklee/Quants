@@ -241,7 +241,6 @@ def show_chart(prices,indicators=None,moving_average=None,buying_history=None,se
     ax1 = plt.subplot2grid((5,4),(0,0),rowspan=4,colspan=4)
     mfinance.candlestick_ohlc(ax1,chart_data,colorup='r',colordown='b',alpha=0.7)
     ax1.grid(True)
-    ax1.xaxis.set_major_locator(mticker.MaxNLocator(10))
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
     plt.ylabel('Stock price')
