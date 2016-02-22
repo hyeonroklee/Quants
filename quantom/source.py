@@ -7,11 +7,16 @@ import pandas as pd
 
 def update_stock_data_file(symbol,data):
     target_file = os.path.dirname(__file__) + '/../data/' + symbol + '.csv'
-    #
-    # current_date = pd.to_datetime(str(data.index.values[0])).strftime('%Y-%m-%d')
-    # da =  pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
-    #                    parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
-    #                    dtype={'open':np.float32,'high':np.float32,'low':np.float32,'close':np.float32,'volume':np.int32})
+    try:
+        history_data =  pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
+                           parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
+                           dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})
+        for date in data.index.values:
+            history_data.loc[date] = data.loc[date]
+        history_data.index.name = 'date'
+        history_data.to_csv(target_file)
+    except IOError:
+        data.to_csv(target_file)
 
 
 def read_stock_data_from_google(symbol,start_date='2015-06-04',end_date='2016-01-08'):
@@ -30,9 +35,11 @@ def read_stock_data_from_google(symbol,start_date='2015-06-04',end_date='2016-01
         open_price, high_price, low_price, close_price = [float(x) for x in [_open,_high,_low,_close]]
         date = dt.datetime.strptime(_date,'%d-%b-%y')
         result = result.append(pd.DataFrame([[open_price,high_price,low_price,close_price,_volume]],columns=['open','high','low','close','volume'],index=[date]))
+    result.index.name = 'date'
     return result
 
-if __name__ == '__main__':
-    symbol = 'AAPL'
-    data = read_stock_data_from_google(symbol)
-    update_stock_data_file(symbol,data)
+def read_stock_data_from_file(symbol):
+    target_file = os.path.dirname(__file__) + '/../data/' + symbol + '.csv'
+    return pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
+                       parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
+                       dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})

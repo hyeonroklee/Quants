@@ -6,11 +6,15 @@ from core import (
 from util import (
     sma,ema,willr,rocr,macd,bollinger_bands,rsi,
     generate_stock_prices,generate_stocks,
-    get_stock_prices_from_google,
-    get_stock_prices_from_csv,
     calculate_alpha_beta_of_capm,
     show_chart,
     calculate_return,optimize_portfolio
+)
+
+from source import (
+    update_stock_data_file,
+    read_stock_data_from_file,
+    read_stock_data_from_google
 )
 
 from strategy import (
@@ -19,6 +23,7 @@ from strategy import (
     SVMClassifier,
     NNClassifier
 )
+
 
 __all__ = [
     'Asset',
@@ -29,9 +34,10 @@ __all__ = [
     'LimitOrder',
     'generate_stock_prices',
     'generate_stocks',
-    'get_stock_prices_from_google',
-    'get_stock_prices_from_csv',
     'calculate_alpha_beta_of_capm',
+    'update_stock_data_file',
+    'read_stock_data_from_file',
+    'read_stock_data_from_google',
     'sma',
     'ema',
     'willr',

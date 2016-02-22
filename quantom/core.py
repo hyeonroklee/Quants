@@ -169,20 +169,20 @@ class TradingSystem(object):
             try:
                 self._before_market_open(self._context,new_data1)
             except Exception as e:
-                # print '[Error] before_market_open : ' + str(e)
-                pass
+                print '[Error] before_market_open : ' + str(e)
+                # pass
 
             try:
                 self._execute_orders()
             except Exception as e:
-                # print '[Error] execute_orders : ' + str(e)
-                pass
+                print '[Error] execute_orders : ' + str(e)
+                # pass
 
             try:
                 self._after_market_close(self._context,new_data2)
             except Exception as e:
-                # print '[Error] after_market_close : ' + str(e)
-                pass
+                print '[Error] after_market_close : ' + str(e)
+                # pass
 
     def _order(self,symbol,amount,style=MarketOrder()):
         order = Order()
