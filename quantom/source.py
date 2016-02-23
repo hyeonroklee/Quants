@@ -13,6 +13,7 @@ def update_stock_data_file(symbol,data):
                            dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})
         for date in data.index.values:
             history_data.loc[date] = data.loc[date]
+        history_data.sort_index(inplace=True)
         history_data.index.name = 'date'
         history_data.to_csv(target_file)
     except IOError:

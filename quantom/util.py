@@ -98,6 +98,7 @@ def optimize_portfolio(prices):
     r = []
     for symbol in prices:
         ret_close_price = prices[symbol]['close'].pct_change().values[1:]
+        ret_close_price[np.isnan(ret_close_price)] = 0
         ret_close_prices.append(ret_close_price)
         r.append(np.mean(ret_close_price))
 
@@ -108,28 +109,39 @@ def optimize_portfolio(prices):
     def calculate_mean_var(W,R,C):
         return W*R,W*C*W.T
 
+    def fitness_by_fixed_rf(W,R=r,C=c,rf=0.0):
+        W = np.matrix(W)
+        port_mean,port_var = calculate_mean_var(W,R,C)
+        return port_var + 100*abs(port_mean-rf)
+
     def fitness(W,R=r,C=c,rf=0.0):
         W = np.matrix(W)
         port_mean,port_var = calculate_mean_var(W,R,C)
-        # util = (port_mean - rf) / np.sqrt(port_var)
-        return port_var + 100*abs(port_mean-rf)
+        util = (port_mean - rf) / np.sqrt(port_var)
+        return 1/util
 
     rets = []
     vars = []
     ws = []
 
     for rf in np.linspace(min(r)[0,0],max(r)[0,0],num=20):
-        n = 3
         w = np.matrix(np.ones(n)/n)
         _b = [ (0.,1.) for i in range(n)]
         _c = ({'type':'eq', 'fun': lambda W: sum(W)-1. })
-        result = opt.minimize(fitness, w, args=(r,c,rf) ,method='SLSQP',constraints=_c,bounds=_b)
+        result = opt.minimize(fitness_by_fixed_rf, w, args=(r,c,rf) ,method='SLSQP',constraints=_c,bounds=_b)
         ret,var = calculate_mean_var(np.matrix(result.x),r,c)
         ws.append(result.x)
         rets.append(ret[0,0])
         vars.append(var[0,0])
 
-    return ws,rets,vars
+    rf = 0.001
+    w = np.matrix(np.ones(n)/n)
+    _b = [ (0.,1.) for i in range(n)]
+    _c = ({'type':'eq', 'fun': lambda W: sum(W)-1. })
+    result = opt.minimize(fitness, w, args=(r,c,rf) ,method='SLSQP',constraints=_c,bounds=_b)
+    ret,var = calculate_mean_var(np.matrix(result.x),r,c)
+
+    return result.x,ret[0,0],var[0,0],ws,rets,vars
 
 def generate_stocks(symbols=['AAPL','GOOG', 'AMZN'],n=250,price=100.,pos=2,initial_volume=1000000,mean=[0.,0.,0.],cov=[[0.0004,0.,0.],[0.,0.0004,0.],[0.,0.,0.0004]],start_date='2015-06-04'):
     stocks = {}
