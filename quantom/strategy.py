@@ -12,24 +12,25 @@ from sklearn import svm
 class Strategy(object):
     __metaclass__  = ABCMeta
 
-    def __init__(self):
+    def __init__(self,context):
         super(Strategy,self).__init__()
+        self._context = context
 
     @abstractmethod
-    def isEnter(self,context,data):
+    def is_enter(self,data):
         pass
 
     @abstractmethod
-    def isExit(self,context,data):
+    def is_exit(self,data):
         pass
 
 class GoldenDeathCross(Strategy):
-    def __init__(self,short=5,long=14):
-        super(GoldenDeathCross,self).__init__()
+    def __init__(self,context,short=5,long=14):
+        super(GoldenDeathCross,self).__init__(context)
         self._short = short
         self._long = long
 
-    def isEnter(self,context,data):
+    def is_enter(self,data):
         prices = data['close']
         short_ma = sma(prices,self._short,2)
         long_ma = sma(prices,self._long,2)
@@ -37,7 +38,7 @@ class GoldenDeathCross(Strategy):
             return True
         return False
 
-    def isExit(self,context,data):
+    def is_exit(self,data):
         prices = data['close']
         short_ma = sma(prices,self._short,2)
         long_ma = sma(prices,self._long,2)
@@ -46,20 +47,20 @@ class GoldenDeathCross(Strategy):
         return False
 
 class MACDCross(Strategy):
-    def __init__(self,short=12,long=26,signal=9):
-        super(MACDCross,self).__init__()
+    def __init__(self,context,short=12,long=26,signal=9):
+        super(MACDCross,self).__init__(context)
         self._short = short
         self._long = long
         self._signal = signal
 
-    def isEnter(self,context,data):
+    def is_enter(self,data):
         prices = data['close']
         macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
         if macd_hist[len(macd_hist)-2] < 0 and macd_hist[len(macd_hist)-1] > 0:
             return True
         return False
 
-    def isExit(self,context,data):
+    def is_exit(self,data):
         prices = data['close']
         macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
         if macd_hist[len(macd_hist)-2] > 0 and macd_hist[len(macd_hist)-1] < 0:
@@ -67,7 +68,8 @@ class MACDCross(Strategy):
         return False
 
 class SVMClassifier(Strategy):
-    def __init__(self,training_data,window=90,target=10):
+    def __init__(self,context,training_data,window=90,target=10):
+        super(SVMClassifier, self).__init__(context)
         x = []
         y = []
         prices = training_data['close'].values[1:]
@@ -86,7 +88,7 @@ class SVMClassifier(Strategy):
         self._target = target
         self._day_after_enter = 0
 
-    def isEnter(self,context,data):
+    def is_enter(self,data):
         x = []
         ret_prices = data['close'].pct_change().values[1:]
         if len(ret_prices) >= self._window:
@@ -98,7 +100,7 @@ class SVMClassifier(Strategy):
                 return True
         return False
 
-    def isExit(self,context,data):
+    def is_exit(self,data):
         if self._day_after_enter > 0:
             if self._day_after_enter == self._target:
                 self._day_after_enter = 0
@@ -109,7 +111,8 @@ class SVMClassifier(Strategy):
 
 
 class NNClassifier(Strategy):
-    def __init__(self,training_data,window=90,target=10):
+    def __init__(self,context,training_data,window=90,target=10):
+        super(NNClassifier,self).__init__(context)
         data = []
         prices = training_data['close'].values[1:]
         ret_prices = training_data['close'].pct_change().values[1:]
@@ -122,7 +125,7 @@ class NNClassifier(Strategy):
         self._target = target
         self._day_after_enter = 0
 
-    def isEnter(self,context,data):
+    def is_enter(self,data):
         x = []
         ret_prices = data['close'].pct_change().values[1:]
         if len(ret_prices) >= self._window:
@@ -132,7 +135,7 @@ class NNClassifier(Strategy):
                 return True
         return False
 
-    def isExit(self,context,data):
+    def is_exit(self,data):
         if self._day_after_enter > 0:
             if self._day_after_enter == self._target:
                 self._day_after_enter = 0

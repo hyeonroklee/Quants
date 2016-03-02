@@ -9,13 +9,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 
 def initialize(context):
-    training_data = generate_stock_prices(n=500,price=initial_price)
-    context.strategy = SVMClassifier(training_data=training_data,window=20,target=5)
+    context.strategy = SVMClassifier(context,training_data=generate_stock_prices(n=500,price=initial_price),window=20,target=5)
 
 def before_market_open(context,data):
-    if context.strategy.isEnter(context,data['AAPL']):
+    if context.strategy.is_enter(data['AAPL']):
         context.order('AAPL',100,MarketOrder())
-    elif context.strategy.isExit(context,data['AAPL']):
+    elif context.strategy.is_exit(data['AAPL']):
         context.order('AAPL',-100,MarketOrder())
 
 def after_market_close(context,data):
@@ -35,8 +34,7 @@ if __name__ == '__main__':
     data = pd.Panel( { 'AAPL' : read_stock_data_from_google('AAPL') } )
     # data = pd.Panel( { 'AAPL' : read_stock_data_from_file('AAPL') } )
 
-    ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close,initial_cash=initial_cash)
-    ts.run(data)
-    print str(ts._context)
+    ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close,initial_cash=initial_cash).run(data)
+    print str(ts.context)
 
-    show_chart(data['AAPL'],buying_history=ts._context.buying_history,selling_history=ts._context.selling_history)
+    show_chart(data['AAPL'],buying_history=ts.context.buying_history,selling_history=ts.context.selling_history)
