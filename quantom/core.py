@@ -21,14 +21,6 @@ class LimitOrder(object):
     def __str__(self):
         return 'LimitOrder %f' % self._price
 
-class Order(object):
-    def __init__(self):
-        super(Order,self).__init__()
-        pass
-
-    def get_id(self):
-        return self.__hash__()
-
 class Asset(object):
     def __init__(self,symbol,amount=0,price=0):
         super(Asset,self).__init__()
@@ -137,6 +129,14 @@ class Context(object):
         msg += 'return = %f ' % (((self.cash + self.do_portfolio_valuation()) / self.initial_cash)-1) + '\n'
         msg += '<<<<<< Context <<<<<<'
         return msg
+
+class Order(object):
+    def __init__(self):
+        super(Order,self).__init__()
+        pass
+
+    def get_id(self):
+        return self.__hash__()
 
 class TradingSystem(object):
     def __init__(self,**kwargs):

@@ -44,3 +44,11 @@ def read_stock_data_from_file(symbol):
     return pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
                        parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
                        dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})
+
+def read_stock_data_from_all_files():
+    stock_data = {}
+    for f in os.listdir(os.path.dirname(__file__) + '/../data/'):
+        if f.endswith(".csv"):
+            symbol = f.split('.')[0]
+            stock_data[symbol] = read_stock_data_from_file(symbol)
+    return pd.Panel(stock_data)

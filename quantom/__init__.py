@@ -14,6 +14,7 @@ from util import (
 from source import (
     update_stock_data_file,
     read_stock_data_from_file,
+    read_stock_data_from_all_files,
     read_stock_data_from_google
 )
 
@@ -37,6 +38,7 @@ __all__ = [
     'calculate_alpha_beta_of_capm',
     'update_stock_data_file',
     'read_stock_data_from_file',
+    'read_stock_data_from_all_files',
     'read_stock_data_from_google',
     'sma',
     'ema',

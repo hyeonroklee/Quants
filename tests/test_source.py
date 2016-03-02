@@ -8,3 +8,4 @@ if __name__ == '__main__':
         update_stock_data_file(symbol,data1)
 
     print read_stock_data_from_file('AAPL')
+    print read_stock_data_from_all_files()['AAPL']

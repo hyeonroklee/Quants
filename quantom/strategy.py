@@ -26,21 +26,21 @@ class Strategy(object):
 class GoldenDeathCross(Strategy):
     def __init__(self,short=5,long=14):
         super(GoldenDeathCross,self).__init__()
-        self.short = short
-        self.long = long
+        self._short = short
+        self._long = long
 
     def isEnter(self,context,data):
         prices = data['close']
-        short_ma = sma(prices,self.short,2)
-        long_ma = sma(prices,self.long,2)
+        short_ma = sma(prices,self._short,2)
+        long_ma = sma(prices,self._long,2)
         if short_ma[len(short_ma)-2] < long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] > long_ma[len(long_ma)-1]:
             return True
         return False
 
     def isExit(self,context,data):
         prices = data['close']
-        short_ma = sma(prices,self.short,2)
-        long_ma = sma(prices,self.long,2)
+        short_ma = sma(prices,self._short,2)
+        long_ma = sma(prices,self._long,2)
         if short_ma[len(short_ma)-2] > long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] < long_ma[len(long_ma)-1]:
             return True
         return False
