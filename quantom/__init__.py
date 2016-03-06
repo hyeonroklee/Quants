@@ -22,7 +22,9 @@ from strategy import (
     GoldenDeathCross,
     MACDCross,
     SVMClassifier,
-    NNClassifier
+    KnnClassifier,
+    NNClassifier,
+    optimize_strategy
 )
 
 
@@ -53,5 +55,7 @@ __all__ = [
     'GoldenDeathCross',
     'MACDCross',
     'SVMClassifier',
-    'NNClassifier'
+    'KnnClassifier',
+    'NNClassifier',
+    'optimize_strategy'
 ]

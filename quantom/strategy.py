@@ -3,11 +3,12 @@ from util import sma,macd,rsi
 from abc import ABCMeta,abstractmethod
 
 import random
+import json
 import numpy as np
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
+from sklearn.neighbors import KNeighborsClassifier
 
 class Strategy(object):
     __metaclass__  = ABCMeta
@@ -31,17 +32,25 @@ class GoldenDeathCross(Strategy):
         self._long = long
 
     def is_enter(self,data):
+        if self._short >= self._long:
+            return False
         prices = data['close']
         short_ma = sma(prices,self._short,2)
         long_ma = sma(prices,self._long,2)
+        if len(short_ma) == 0 or len(long_ma) == 0 or np.any(np.isnan(short_ma)) or np.any(np.isnan(long_ma)):
+            return False
         if short_ma[len(short_ma)-2] < long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] > long_ma[len(long_ma)-1]:
             return True
         return False
 
     def is_exit(self,data):
+        if self._short >= self._long:
+            return False
         prices = data['close']
         short_ma = sma(prices,self._short,2)
         long_ma = sma(prices,self._long,2)
+        if len(short_ma) == 0 or len(long_ma) == 0 or np.any(np.isnan(short_ma)) or np.any(np.isnan(long_ma)):
+            return False
         if short_ma[len(short_ma)-2] > long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] < long_ma[len(long_ma)-1]:
             return True
         return False
@@ -54,18 +63,32 @@ class MACDCross(Strategy):
         self._signal = signal
 
     def is_enter(self,data):
-        prices = data['close']
-        macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
-        if macd_hist[len(macd_hist)-2] < 0 and macd_hist[len(macd_hist)-1] > 0:
-            return True
-        return False
+        if self._short >=  self._long:
+            return False
+        try:
+            prices = data['close']
+            macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
+            if len(macd_hist) == 0 or np.any(np.isnan(macd_hist)):
+                return False
+            if macd_hist[len(macd_hist)-2] < 0 and macd_hist[len(macd_hist)-1] > 0:
+                return True
+            return False
+        except Exception as e:
+            return False
 
     def is_exit(self,data):
-        prices = data['close']
-        macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
-        if macd_hist[len(macd_hist)-2] > 0 and macd_hist[len(macd_hist)-1] < 0:
-            return True
-        return False
+        if self._short >=  self._long:
+            return False
+        try:
+            prices = data['close']
+            macd_line,macd_signal,macd_hist,ma_long,ma_short = macd(prices,self._short,self._long,self._signal)
+            if len(macd_hist) == 0 or np.any(np.isnan(macd_hist)):
+                return False
+            if macd_hist[len(macd_hist)-2] > 0 and macd_hist[len(macd_hist)-1] < 0:
+                return True
+            return False
+        except Exception as e:
+            return False
 
 class SVMClassifier(Strategy):
     def __init__(self,context,training_data,window=90,target=10):
@@ -109,6 +132,15 @@ class SVMClassifier(Strategy):
                 self._day_after_enter += 1
         return False
 
+class KnnClassifier(Strategy):
+    def __init__(self,context):
+        super(KnnClassifier,self).__init__(context)
+
+    def is_enter(self,data):
+        pass
+
+    def is_exit(self,data):
+        pass
 
 class NNClassifier(Strategy):
     def __init__(self,context,training_data,window=90,target=10):
@@ -117,20 +149,28 @@ class NNClassifier(Strategy):
         prices = training_data['close'].values[1:]
         ret_prices = training_data['close'].pct_change().values[1:]
         for i in range(window,len(prices)-target):
-            data.append( [ret_prices[i-window:i].reshape(window,1) ,
-                         np.array([1 if prices[i] < prices[i+target] else 0])])
-        self._classifier = Network([window,window/2,1])
-        self._classifier.SGD(data,10,len(data),0.01)
+            data.append([
+                ret_prices[i-window:i].reshape(window,1) ,
+                np.array( [[0],[1]] if prices[i-1] < prices[i-1+target] else [[1],[0]] )
+            ])
+
+        layers = [window,window/2,2]
+        self._classifier = Network(layers)
+        self._classifier.SGD(data,10,len(data)/2,0.05,monitor_training_accuracy=True,monitor_training_cost=True)
         self._window = window
         self._target = target
         self._day_after_enter = 0
 
     def is_enter(self,data):
-        x = []
         ret_prices = data['close'].pct_change().values[1:]
+
+        # print ret_prices
+
         if len(ret_prices) >= self._window:
-            x.append( ret_prices[len(ret_prices)-self._window:len(ret_prices)].reshape(self._window,1) )
-            if self._classifier.feedforward(x[0])[0][0] > 0.50 and self._day_after_enter == 0:
+            x = ret_prices[len(ret_prices)-self._window:len(ret_prices)].reshape(self._window,1)
+            # print "x = ",x
+            # print self._classifier.feedforward(x),np.argmax(self._classifier.feedforward(x))
+            if np.argmax(self._classifier.feedforward(x)) == 1 and self._day_after_enter == 0:
                 self._day_after_enter = 1
                 return True
         return False
@@ -144,14 +184,45 @@ class NNClassifier(Strategy):
                 self._day_after_enter += 1
         return False
 
+
+class QuadraticCost(object):
+
+    @staticmethod
+    def fn(a, y):
+        return 0.5*np.linalg.norm(a-y)**2
+
+    @staticmethod
+    def delta(z, a, y):
+        return (a-y) * sigmoid_prime(z)
+
+
+class CrossEntropyCost(object):
+
+    @staticmethod
+    def fn(a, y):
+        return np.sum(np.nan_to_num(-y*np.log(a)-(1-y)*np.log(1-a)))
+
+    @staticmethod
+    def delta(z, a, y):
+        return (a-y)
+
 class Network(object):
 
-    def __init__(self, sizes):
+    def __init__(self, sizes, cost=CrossEntropyCost):
         self.num_layers = len(sizes)
         self.sizes = sizes
-        self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
+        self.default_weight_initializer()
+        self.cost=cost
+
+    def default_weight_initializer(self):
+        self.biases = [np.random.randn(y, 1) for y in self.sizes[1:]]
+        self.weights = [np.random.randn(y, x)/np.sqrt(x)
+                        for x, y in zip(self.sizes[:-1], self.sizes[1:])]
+
+    def large_weight_initializer(self):
+        self.biases = [np.random.randn(y, 1) for y in self.sizes[1:]]
         self.weights = [np.random.randn(y, x)
-                        for x, y in zip(sizes[:-1], sizes[1:])]
+                        for x, y in zip(self.sizes[:-1], self.sizes[1:])]
 
     def feedforward(self, a):
         for b, w in zip(self.biases, self.weights):
@@ -159,30 +230,55 @@ class Network(object):
         return a
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
-            test_data=None):
-        if test_data: n_test = len(test_data)
+            lmbda = 0.0,
+            evaluation_data=None,
+            monitor_evaluation_cost=False,
+            monitor_evaluation_accuracy=False,
+            monitor_training_cost=False,
+            monitor_training_accuracy=False):
+        if evaluation_data: n_data = len(evaluation_data)
         n = len(training_data)
+        evaluation_cost, evaluation_accuracy = [], []
+        training_cost, training_accuracy = [], []
         for j in xrange(epochs):
             random.shuffle(training_data)
             mini_batches = [
                 training_data[k:k+mini_batch_size]
                 for k in xrange(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
-                self.update_mini_batch(mini_batch, eta)
-            if test_data:
-                print "Epoch {0}: {1} / {2}".format(
-                    j, self.evaluate(test_data), n_test)
-            else:
-                print "Epoch {0} complete".format(j)
+                self.update_mini_batch(
+                    mini_batch, eta, lmbda, len(training_data))
+            # print "Epoch %s training complete" % j
+            if monitor_training_cost:
+                cost = self.total_cost(training_data, lmbda)
+                training_cost.append(cost)
+                print "Cost on training data: {}".format(cost)
+            if monitor_training_accuracy:
+                accuracy = self.accuracy(training_data, convert=True)
+                training_accuracy.append(accuracy)
+                print "Accuracy on training data: {} / {}".format(
+                    accuracy, n)
+            if monitor_evaluation_cost:
+                cost = self.total_cost(evaluation_data, lmbda, convert=True)
+                evaluation_cost.append(cost)
+                print "Cost on evaluation data: {}".format(cost)
+            if monitor_evaluation_accuracy:
+                accuracy = self.accuracy(evaluation_data)
+                evaluation_accuracy.append(accuracy)
+                print "Accuracy on evaluation data: {} / {}".format(
+                    self.accuracy(evaluation_data), n_data)
+            print
+        return evaluation_cost, evaluation_accuracy, \
+            training_cost, training_accuracy
 
-    def update_mini_batch(self, mini_batch, eta):
+    def update_mini_batch(self, mini_batch, eta, lmbda, n):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         for x, y in mini_batch:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        self.weights = [w-(eta/len(mini_batch))*nw
+        self.weights = [(1-eta*(lmbda/n))*w-(eta/len(mini_batch))*nw
                         for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b-(eta/len(mini_batch))*nb
                        for b, nb in zip(self.biases, nabla_b)]
@@ -200,8 +296,7 @@ class Network(object):
             activation = sigmoid(z)
             activations.append(activation)
         # backward pass
-        delta = self.cost_derivative(activations[-1], y) * \
-            sigmoid_prime(zs[-1])
+        delta = (self.cost).delta(zs[-1], activations[-1], y)
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
         for l in xrange(2, self.num_layers):
@@ -212,16 +307,91 @@ class Network(object):
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
-    def evaluate(self, test_data):
-        test_results = [(np.argmax(self.feedforward(x)), y)
-                        for (x, y) in test_data]
-        return sum(int(x == y) for (x, y) in test_results)
+    def accuracy(self, data, convert=False):
+        if convert:
+            results = [(np.argmax(self.feedforward(x)), np.argmax(y))
+                       for (x, y) in data]
+        else:
+            results = [(np.argmax(self.feedforward(x)), y)
+                        for (x, y) in data]
+        return sum(int(x == y) for (x, y) in results)
 
-    def cost_derivative(self, output_activations, y):
-        return (output_activations-y)
+    def total_cost(self, data, lmbda, convert=False):
+        cost = 0.0
+        for x, y in data:
+            a = self.feedforward(x)
+            if convert: y = vectorized_result(y)
+            cost += self.cost.fn(a, y)/len(data)
+        cost += 0.5*(lmbda/len(data))*sum(
+            np.linalg.norm(w)**2 for w in self.weights)
+        return cost
+
+    def save(self, filename):
+        data = {"sizes": self.sizes,
+                "weights": [w.tolist() for w in self.weights],
+                "biases": [b.tolist() for b in self.biases],
+                "cost": str(self.cost.__name__)}
+        f = open(filename, "w")
+        json.dump(data, f)
+        f.close()
+
+def vectorized_result(j):
+    e = np.zeros((10, 1))
+    e[j] = 1.0
+    return e
 
 def sigmoid(z):
     return 1.0/(1.0+np.exp(-z))
 
 def sigmoid_prime(z):
     return sigmoid(z)*(1-sigmoid(z))
+
+def optimize_strategy(**kwargs):
+
+    strategy = kwargs['strategy']
+    data = kwargs['data']
+    grid_args = []
+
+    if strategy.__name__ == GoldenDeathCross.__name__:
+        shorts = kwargs['short']
+        longs = kwargs['long']
+        for short in shorts:
+            for long in longs:
+                grid_args.append({'context' : None, 'short' : short ,  'long' : long})
+    elif strategy.__name__ == MACDCross.__name__:
+        shorts = kwargs['short']
+        longs = kwargs['long']
+        signals = kwargs['signal']
+        for short in shorts:
+            for long in longs:
+                for signal in signals:
+                    grid_args.append({'context' : None, 'short' : short ,  'long' : long, 'signal' : signal})
+    elif strategy.__name__ == SVMClassifier.__name__:
+        pass
+    elif strategy.__name__ == KnnClassifier.__name__:
+        pass
+    elif strategy.__name__ == NNClassifier.__name__:
+        pass
+
+    optimal_return = -np.Inf
+    optimal_args = None
+
+    for args in grid_args:
+        s = strategy(**args)
+        profit_rate = 0.
+        is_buying_state = False
+        buying_price = 0.
+        for symbol in data:
+            prices = data[symbol]
+            for k in range(len(prices)):
+                if not is_buying_state and s.is_enter(prices[:k]):
+                    is_buying_state = True
+                    buying_price = prices['close'][k]
+                if is_buying_state and s.is_exit(prices[:k]):
+                    is_buying_state = False
+                    profit_rate += (prices['close'][k]/buying_price - 1)
+        if profit_rate > optimal_return:
+            optimal_return = profit_rate
+            optimal_args = args
+
+    return optimal_return,optimal_args

@@ -207,30 +207,6 @@ def generate_stock_prices(n=250,price=100,pos=2,min_price_bound=0.,initial_volum
 
     return pd.DataFrame(np.matrix([open_prices,high_prices,low_prices,close_prices,volumes]).T.tolist(),columns=['open','high','low','close','volume'],index=dates)
 
-def get_stock_prices_from_google(symbol='AAPL',start_date='2015-06-04',end_date='2016-01-08'):
-    sym = symbol.upper()
-    start = dt.date(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
-    end = dt.date(int(end_date[0:4]),int(end_date[5:7]),int(end_date[8:10]))
-    url_string = "http://www.google.com/finance/historical?q={0}".format(sym)
-    url_string += "&startdate={0}&enddate={1}&output=csv".format(start.strftime('%b %d, %Y'),end.strftime('%b %d, %Y'))
-    csv = ul.urlopen(url_string).readlines()
-    csv.reverse()
-
-    result = pd.DataFrame([],columns=['open','high','low','close','volume'])
-    for bar in xrange(0,len(csv)-1):
-        _date, _open, _high , _low, _close, _volume = csv[bar].rstrip().split(',')
-        open_price, high_price, low_price, close_price = [float(x) for x in [_open,_high,_low,_close]]
-        date = dt.datetime.strptime(_date,'%d-%b-%y')
-        result = result.append(pd.DataFrame([[open_price,high_price,low_price,close_price,_volume]],columns=['open','high','low','close','volume'],index=[date]))
-
-    return result
-
-def get_stock_prices_from_csv(name):
-    dateparse = lambda x: dt.datetime.strptime(x, '%Y%m%d')
-    return pd.read_csv(name,index_col='date',usecols=['date','open','high','low','close','volume'],parse_dates=['date'],date_parser=dateparse,
-                       dtype={'open':np.float32,'high':np.float32,'low':np.float32,'close':np.float32,'volume':np.int32})
-
-
 def calculate_alpha_beta_of_capm(stock_prices,market_prices):
     stock_ret = stock_prices.pct_change().values[1:]
     market_ret = market_prices.pct_change().values[1:]
