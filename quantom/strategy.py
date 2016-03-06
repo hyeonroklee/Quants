@@ -34,26 +34,28 @@ class GoldenDeathCross(Strategy):
     def is_enter(self,data):
         if self._short >= self._long:
             return False
-        prices = data['close']
-        short_ma = sma(prices,self._short,2)
-        long_ma = sma(prices,self._long,2)
-        if len(short_ma) == 0 or len(long_ma) == 0 or np.any(np.isnan(short_ma)) or np.any(np.isnan(long_ma)):
+        try:
+            prices = data['close']
+            short_ma = sma(prices,self._short,2)
+            long_ma = sma(prices,self._long,2)
+            if short_ma[len(short_ma)-2] < long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] > long_ma[len(long_ma)-1]:
+                return True
             return False
-        if short_ma[len(short_ma)-2] < long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] > long_ma[len(long_ma)-1]:
-            return True
-        return False
+        except Exception as e:
+            return False
 
     def is_exit(self,data):
         if self._short >= self._long:
             return False
-        prices = data['close']
-        short_ma = sma(prices,self._short,2)
-        long_ma = sma(prices,self._long,2)
-        if len(short_ma) == 0 or len(long_ma) == 0 or np.any(np.isnan(short_ma)) or np.any(np.isnan(long_ma)):
+        try:
+            prices = data['close']
+            short_ma = sma(prices,self._short,2)
+            long_ma = sma(prices,self._long,2)
+            if short_ma[len(short_ma)-2] > long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] < long_ma[len(long_ma)-1]:
+                return True
             return False
-        if short_ma[len(short_ma)-2] > long_ma[len(long_ma)-2] and short_ma[len(short_ma)-1] < long_ma[len(long_ma)-1]:
-            return True
-        return False
+        except Exception as e:
+            return False
 
 class MACDCross(Strategy):
     def __init__(self,context,short=12,long=26,signal=9):
