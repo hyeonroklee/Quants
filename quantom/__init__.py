@@ -1,6 +1,8 @@
 from core import (
     Asset,Context,Portfolio,TradingSystem,
-    MarketOrder,LimitOrder
+    OpenMarketOrder,
+    CloseMarketOrder,
+    LimitOrder
 )
 
 from util import (
@@ -22,7 +24,7 @@ from strategy import (
     GoldenDeathCross,
     MACDCross,
     SVMClassifier,
-    KnnClassifier,
+    KNNClassifier,
     NNClassifier,
     optimize_strategy
 )
@@ -33,7 +35,8 @@ __all__ = [
     'Context',
     'Portfolio',
     'TradingSystem',
-    'MarketOrder',
+    'OpenMarketOrder',
+    'CloseMarketOrder',
     'LimitOrder',
     'generate_stock_prices',
     'generate_stocks',
@@ -55,7 +58,7 @@ __all__ = [
     'GoldenDeathCross',
     'MACDCross',
     'SVMClassifier',
-    'KnnClassifier',
+    'KNNClassifier',
     'NNClassifier',
     'optimize_strategy'
 ]

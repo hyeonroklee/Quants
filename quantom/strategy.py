@@ -134,9 +134,9 @@ class SVMClassifier(Strategy):
                 self._day_after_enter += 1
         return False
 
-class KnnClassifier(Strategy):
-    def __init__(self,context):
-        super(KnnClassifier,self).__init__(context)
+class KNNClassifier(Strategy):
+    def __init__(self,context,training_data,window=90,target=10):
+        super(KNNClassifier,self).__init__(context)
 
     def is_enter(self,data):
         pass
@@ -369,20 +369,36 @@ def optimize_strategy(**kwargs):
                 for signal in signals:
                     grid_args.append({'context' : None, 'short' : short ,  'long' : long, 'signal' : signal})
     elif strategy.__name__ == SVMClassifier.__name__:
-        pass
-    elif strategy.__name__ == KnnClassifier.__name__:
-        pass
+        training_data = kwargs['training_data']
+        windows = kwargs['window']
+        targets = kwargs['target']
+        for window in windows:
+            for target in targets:
+                grid_args.append({'context' : None, 'training_data' : training_data, 'window' : window, 'target' : target})
+    elif strategy.__name__ == KNNClassifier.__name__:
+        training_data = kwargs['training_data']
+        windows = kwargs['window']
+        targets = kwargs['target']
+        for window in windows:
+            for target in targets:
+                grid_args.append({'context' : None, 'training_data' : training_data, 'window' : window, 'target' : target})
     elif strategy.__name__ == NNClassifier.__name__:
-        pass
+        training_data = kwargs['training_data']
+        windows = kwargs['window']
+        targets = kwargs['target']
+        for window in windows:
+            for target in targets:
+                grid_args.append({'context' : None, 'training_data' : training_data, 'window' : window, 'target' : target})
 
     optimal_return = -np.Inf
     optimal_args = None
 
     for args in grid_args:
         s = strategy(**args)
-        profit_rate = 0.
         is_buying_state = False
         buying_price = 0.
+        total_buying_price = 0.
+        total_selling_price = 0.
         for symbol in data:
             prices = data[symbol]
             for k in range(len(prices)):
@@ -391,7 +407,10 @@ def optimize_strategy(**kwargs):
                     buying_price = prices['close'][k]
                 if is_buying_state and s.is_exit(prices[:k]):
                     is_buying_state = False
-                    profit_rate += (prices['close'][k]/buying_price - 1)
+                    total_buying_price += buying_price
+                    total_selling_price += prices['close'][k]
+
+        profit_rate = (total_selling_price/total_buying_price - 1)
         if profit_rate > optimal_return:
             optimal_return = profit_rate
             optimal_args = args
