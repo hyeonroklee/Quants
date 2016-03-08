@@ -5,8 +5,15 @@ import urllib as url
 import numpy as np
 import pandas as pd
 
-def update_stock_data_file(symbol,data):
-    target_file = os.path.dirname(__file__) + '/../data/' + symbol + '.csv'
+stock_exchange_path = {
+    'NASDAQ' : '/../data/usa/NASDAQ/',
+    'NYSE' : '/../data/usa/NYSE/',
+    'KOSDAQ' : '/../data/korea11/KOSDAQ/',
+    'KOSPI' : '/../data/korea11/KOSPI/'
+}
+
+def update_stock_data_file(exchange,symbol,data):
+    target_file = os.path.dirname(__file__)  + stock_exchange_path[exchange] + symbol + '.csv'
     try:
         history_data =  pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
                            parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
@@ -20,7 +27,7 @@ def update_stock_data_file(symbol,data):
         data.to_csv(target_file)
 
 
-def read_stock_data_from_google(symbol,start_date='2015-06-04',end_date='2016-01-08'):
+def read_stock_data_from_google(exchange,symbol,start_date='2015-06-04',end_date='2016-01-08'):
     sym = symbol.upper()
     start = dt.date(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
     end = dt.date(int(end_date[0:4]),int(end_date[5:7]),int(end_date[8:10]))
@@ -39,16 +46,20 @@ def read_stock_data_from_google(symbol,start_date='2015-06-04',end_date='2016-01
     result.index.name = 'date'
     return result
 
-def read_stock_data_from_file(symbol):
-    target_file = os.path.dirname(__file__) + '/../data/' + symbol + '.csv'
+def read_stock_data_from_file(exchange,symbol):
+    target_file = os.path.dirname(__file__) + stock_exchange_path[exchange] + '/' + symbol + '.csv'
     return pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
                        parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
                        dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})
 
 def read_stock_data_from_all_files():
     stock_data = {}
-    for f in os.listdir(os.path.dirname(__file__) + '/../data/'):
-        if f.endswith(".csv"):
-            symbol = f.split('.')[0]
-            stock_data[symbol] = read_stock_data_from_file(symbol)
+    for exchange in stock_exchange_path:
+        try:
+            for f in os.listdir(os.path.dirname(__file__) + stock_exchange_path[exchange]):
+                if f.endswith(".csv"):
+                    symbol = f.split('.')[0]
+                    stock_data[symbol] = read_stock_data_from_file(exchange,symbol)
+        except Exception as e:
+            print str(e)
     return pd.Panel(stock_data)

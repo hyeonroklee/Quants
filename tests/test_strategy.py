@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 def initialize(context):
-    data = pd.Panel( { 'AAPL' : read_stock_data_from_file('AAPL') } )
+    data = pd.Panel( { 'AAPL' : read_stock_data_from_file('NASDAQ','AAPL') } )
 
     optimal_return,optimal_args = optimize_strategy(strategy=GoldenDeathCross,data=data,short=range(5,10),long=range(11,20))
     optimal_args['context'] = context
@@ -41,8 +41,8 @@ if __name__ == '__main__':
     initial_price = 50000
     initial_cash = 10000000
 
-    data = pd.Panel( { 'AAPL' : read_stock_data_from_file('AAPL') ,
-                       'GOOG' : read_stock_data_from_file('GOOG') } )
+    data = pd.Panel( { 'AAPL' : read_stock_data_from_file('NASDAQ','AAPL') ,
+                       'GOOG' : read_stock_data_from_file('NASDAQ','GOOG') } )
 
     ts = TradingSystem(initialize=initialize,before_market_open=before_market_open,after_market_close=after_market_close,initial_cash=initial_cash).run(data)
     print str(ts.context)

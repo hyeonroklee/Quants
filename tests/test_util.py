@@ -24,9 +24,10 @@ if __name__ == '__main__':
 
     # optimize_portfolio
     stock_data = {}
-    symbols = [ 'AAPL' , 'GOOG' , 'AMZN', 'ORCL', 'XOM', 'FB', 'TWTR', 'IBM', 'MSFT', 'ADBE' ]
-    for symbol in symbols:
-        stock_data[symbol] = read_stock_data_from_file(symbol)
+    stocks = { 'NASDAQ' : [ 'AAPL' , 'GOOG' , 'AMZN', 'FB', 'MSFT', 'ADBE' ] }
+    for exchange in stocks:
+        for symbol in stocks[exchange]:
+            stock_data[symbol] = read_stock_data_from_file(exchange,symbol)
 
     p = pd.Panel(stock_data)
     best,best_r,best_v, ws,rets,vars = optimize_portfolio(p)

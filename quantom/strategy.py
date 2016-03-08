@@ -410,9 +410,10 @@ def optimize_strategy(**kwargs):
                     total_buying_price += buying_price
                     total_selling_price += prices['close'][k]
 
-        profit_rate = (total_selling_price/total_buying_price - 1)
-        if profit_rate > optimal_return:
-            optimal_return = profit_rate
-            optimal_args = args
+        if total_buying_price != 0:
+            profit_rate = (total_selling_price/total_buying_price - 1)
+            if profit_rate > optimal_return:
+                optimal_return = profit_rate
+                optimal_args = args
 
     return optimal_return,optimal_args
