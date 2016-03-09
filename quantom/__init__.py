@@ -17,6 +17,7 @@ from source import (
     update_stock_data_file,
     read_stock_data_from_file,
     read_stock_data_from_all_files,
+    read_stock_data_by_exchange,
     read_stock_data_from_google
 )
 
@@ -44,6 +45,7 @@ __all__ = [
     'update_stock_data_file',
     'read_stock_data_from_file',
     'read_stock_data_from_all_files',
+    'read_stock_data_by_exchange',
     'read_stock_data_from_google',
     'sma',
     'ema',

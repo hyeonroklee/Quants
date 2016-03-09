@@ -8,8 +8,8 @@ import pandas as pd
 stock_exchange_path = {
     'NASDAQ' : '/../data/usa/NASDAQ/',
     'NYSE' : '/../data/usa/NYSE/',
-    'KOSDAQ' : '/../data/korea11/KOSDAQ/',
-    'KOSPI' : '/../data/korea11/KOSPI/'
+    'KOSDAQ' : '/../data/korea/KOSDAQ/',
+    'KOSPI' : '/../data/korea/KOSPI/'
 }
 
 def update_stock_data_file(exchange,symbol,data):
@@ -47,10 +47,18 @@ def read_stock_data_from_google(exchange,symbol,start_date='2015-06-04',end_date
     return result
 
 def read_stock_data_from_file(exchange,symbol):
-    target_file = os.path.dirname(__file__) + stock_exchange_path[exchange] + '/' + symbol + '.csv'
+    target_file = os.path.dirname(__file__) + stock_exchange_path[exchange] + symbol + '.csv'
     return pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
                        parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
                        dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})
+
+def read_stock_data_by_exchange(exchange):
+    stock_data = {}
+    for f in os.listdir(os.path.dirname(__file__) + stock_exchange_path[exchange]):
+        if f.endswith(".csv"):
+            symbol = f.split('.')[0]
+            stock_data[symbol] = read_stock_data_from_file(exchange,symbol)
+    return pd.Panel(stock_data)
 
 def read_stock_data_from_all_files():
     stock_data = {}
