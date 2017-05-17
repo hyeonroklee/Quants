@@ -1,7 +1,7 @@
-##Quants
+## Quants
 Simple Stock Trading Back-Testing Program
 
-##Dependencies
+## Dependencies
 - numpy
 - pandas
 - pandas_datareader
@@ -12,5 +12,5 @@ Simple Stock Trading Back-Testing Program
     export PYTHONPATH=.
     python tests/test.py
 
-##Author
+## Author
 - HyeonRok Lee ( https://kr.linkedin.com/in/hyeonrok-lee-71300084 )
