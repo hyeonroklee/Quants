@@ -1,13 +1,16 @@
 ##Quants
-Stock Market Simulator / Automatic Trading Testing Platform
+Simple Stock Trading Back-Testing Program
 
 ##Dependencies
 - numpy
-- pandas 
-- scipy
+- pandas
+- pandas_datareader
 - matplotlib
-- sklearn
-- flask
+
+## How to run
+cd Quants
+export PYTHONPATH=.
+python tests/test.py
 
 ##Author
 - HyeonRok Lee ( https://kr.linkedin.com/in/hyeonrok-lee-71300084 )
