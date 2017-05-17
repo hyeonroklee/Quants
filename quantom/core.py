@@ -1,311 +1,286 @@
-
 import numpy as np
 import pandas as pd
 
-
-class MarketOrder(object):
-    def __init__(self):
-        super(MarketOrder,self).__init__()
-
-    def __str__(self):
-        return MarketOrder.__name__
-
-class OpenMarketOrder(MarketOrder):
-    def __init__(self):
-        super(OpenMarketOrder,self).__init__()
-
-    def __str__(self):
-        return OpenMarketOrder.__name__
-
-class CloseMarketOrder(MarketOrder):
-    def __init__(self):
-        super(CloseMarketOrder,self).__init__()
-
-    def __str__(self):
-        return CloseMarketOrder.__name__
-
-class LimitOrder(object):
-    def __init__(self,price):
-        super(LimitOrder,self).__init__()
-        self._price = float(price)
-
-    def get_price(self):
-        return self._price
-
-    def __str__(self):
-        return 'LimitOrder %f' % self._price
-
-class Asset(object):
-    def __init__(self,symbol,amount=0,price=0):
-        super(Asset,self).__init__()
-        self._symbol = symbol
-        self._avg_price = float(price)
-        self._amount = int(amount)
-        self._total_profit = 0.
-        self._total_buying_price = float(price) * amount
-        self._total_selling_price = 0.
-
-    def buy(self,amount,price):
-        self._avg_price = ((self._avg_price * self._amount) + (float(price) * amount)) / (self._amount + amount)
-        self._amount += amount
-        self._total_buying_price += (float(price) * amount)
-
-    def sell(self,amount,price):
-        if self._amount < amount:
-            raise Exception('Not enough shares : %d < %d' % (self._amount, amount))
-        self._amount -= amount
-        self._total_profit += (price - self._avg_price) * amount
-        self._total_selling_price += (float(price) * amount)
-
-    def get_amount(self):
-        return self._amount
-
-    def get_symbol(self):
-        return self._symbol
-
-    def get_avg_price(self):
-        return self._avg_price
-
-    def get_profit(self):
-        return self._total_profit
-
-    def __str__(self):
-        return '%s avg_price %f amount %d total_buying_price %f total_selling_price %f total_profit %f' % \
-               (self._symbol,self._avg_price, self._amount,self._total_buying_price,self._total_selling_price,self._total_profit)
-
-class Portfolio(object):
-    def __init__(self):
-        super(Portfolio,self).__init__()
-        self._assets = {}
-
-    def buy_asset(self,symbol,amount,price):
-        if not self._assets.has_key(symbol):
-            self._assets[symbol] = Asset(symbol,amount,price)
-        else:
-            self._assets[symbol].buy(amount,price)
-        return self._assets[symbol]
-
-    def sell_asset(self,symbol,amount,price):
-        try:
-            self._assets[symbol].sell(amount,price)
-            return self._assets[symbol]
-        except KeyError:
-            raise Exception('No such asset in Portfolio : %s ' % symbol)
-
-    def has_asset(self,symbol):
-        if self._assets.has_key(symbol):
-            return True
-        else:
-            return False
-
-    def get_asset_amount(self,symbol):
-        if self._assets.has_key(symbol):
-            return self._assets[symbol].get_amount()
-        else:
-            return 0
-
-    def get_assets(self):
-        return self._assets
-
-    def __str__(self):
-        msg = ''
-        if len(self._assets) > 0:
-            for symbol in self._assets:
-                asset = self._assets[symbol]
-                msg += str(asset) + '\n'
-        else:
-            msg += 'no assets in Portfolio'
-        return msg
-
-
-class Context(object):
-    def __init__(self,trading_system,initial_cash=10000.):
-        super(Context, self).__init__()
-        self.portfolio = Portfolio()
-        self.initial_cash = initial_cash
-        self.cash_used_for_buying = 0.
-        self.cash_obtained_from_selling = 0.
-        self.cash = initial_cash
-        self.do_portfolio_valuation = trading_system._do_portfolio_valuation
-        self.order = trading_system._order
-        self.buying_history = {}
-        self.selling_history = {}
-
-    def __str__(self):
-        msg = '>>>>>> Context >>>>>\n'
-        msg += 'initial_cash = %f ' % self.initial_cash + '\n'
-        msg += 'cash_used_for_buying = %f ' % self.cash_used_for_buying + '\n'
-        msg += 'cash_obtained_from_selling = %f ' % self.cash_obtained_from_selling + '\n'
-        msg += 'cash = %f ' % self.cash + '\n'
-
-        msg += 'portfolio value = %f ' % self.do_portfolio_valuation() + '\n'
-        msg += 'total value = %f ' % (self.cash + self.do_portfolio_valuation()) + '\n'
-        msg += 'return = %f ' % (((self.cash + self.do_portfolio_valuation()) / self.initial_cash)-1) + '\n'
-        msg += '<<<<<< Context <<<<<<'
-        return msg
+import matplotlib.pyplot as plt
+import matplotlib.finance as mfinance
+import matplotlib.dates as mdates
 
 class Order(object):
     def __init__(self):
-        super(Order,self).__init__()
         pass
 
-    def get_id(self):
-        return self.__hash__()
+class MarketOrder(Order):
+    def __init__(self,symbol,amount):
+        self._symbol = symbol
+        self._amount = amount
 
-class TradingSystem(object):
-    def __init__(self,**kwargs):
-        super(TradingSystem,self).__init__()
+class LimitOrder(Order):
+    def __init__(self,symbol,price,amount):
+        self._symbol = symbol
+        self._price = price
+        self._amount = amount
 
-        self._initialize = kwargs['initialize']
-        self._before_market_open = kwargs['before_market_open']
-        self._after_market_close = kwargs['after_market_close']
+class Asset(object):
+    def __init__(self,symbol,price,amount):
+        self._symbol = symbol
+        self._avg_price = float(price)
+        self._amount = int(amount)
+    def add(self,price,amount):
+        self._avg_price = (self._avg_price * self._amount + price * amount) / (self._amount + amount)
+        self._amount += amount
+    def remove(self,amount):
+        if self._amount >= amount:
+            self._amount -= amount
+            if self._amount == 0:
+                self._avg_price = 0
+        else:
+            raise ValueError('not available amount : %d > %d' % (amount,self._amount))
+    def __str__(self):
+        return 'avg_price = %.2f amount = %d' % (self._avg_price,self._amount)
 
-        self.context = Context(self,initial_cash=kwargs['initial_cash'] if 'initial_cash' in kwargs else 10000.)
-        self._current_time_index = 0
+class Portfolio(object):
+    def __init__(self):
+        self._assets = {}
+    def add_asset(self,symbol,price,amount):
+        if not symbol in self._assets:
+            self._assets[symbol] = Asset(symbol,0,0)
+        self._assets[symbol].add(price,amount)
+    def remove_asset(self,symbol,amount):
+        if symbol in self._assets:
+            self._assets[symbol].remove(amount)
+    def get_asset_avg_price(self,symbol):
+        if symbol in self._assets:
+            return self._assets[symbol]._avg_price
+        else:
+            return 0.
+    def get_asset_amount(self,symbol):
+        if symbol in self._assets:
+            return self._assets[symbol]._amount
+        else:
+            return 0.
+    def __str__(self):
+        s = '{'
+        for symbol in self._assets:
+            s += ' %s : %s, ' % (symbol,str(self._assets[symbol]))
+        s += '}'
+        return s
 
-        self._order_queue = []
-        self._data = []
+class Context(object):
+    def __init__(self,initial_cash):
+        self._initial_cash = initial_cash
+        self._available_cash = initial_cash
+        self._portfolio = Portfolio()
 
-    def run(self,data):
+
+class QSystem(object):
+
+    class Callback(object):
+
+        def __init__(self):
+            super(QSystem.Callback, self).__init__()
+
+        def initialize(self,context,data):
+            pass
+
+        def handle_data(self,context,data):
+            pass
+
+    def __init__(self,from_date,to_date,
+                 data,initial_cash,callback):
         self._data = data
-        self._initialize(self.context)
+        self._from_date = from_date
+        self._to_date = to_date
+        self._orders = []
+        self._context = Context(initial_cash)
+        self._context.order = self._order
+        self._context.evaluation = self.evaluation
+        self._context.record = self._record
+        self._current_date = None
+        self._initialize = callback.initialize
+        self._handle_data = callback.handle_data
+        self._buy_history = []
+        self._sell_history = []
+        self._history = {}
 
-        for i in range(1,self._data.shape[1]):
-            cut_off_data1 = {}
-            cut_off_data2 = {}
-            for sym in self._data:
-                cut_off_data1[sym] = self._data[sym][:i]
-                cut_off_data2[sym] = self._data[sym][:i+1]
-            new_data1 = pd.Panel(cut_off_data1)
-            new_data2 = pd.Panel(cut_off_data2)
+    def run(self):
+        self._current_date = pd.Timestamp(self._from_date)
+        _delta = pd.Timedelta(days=1)
+        _dates = self._data.axes[1]
+        _dates_len = len(_dates)
+        while not self._current_date in _dates:
+            self._current_date += _delta
+            if self._current_date > _dates[-1]:
+                raise ValueError('date outbounded')
 
-            self._current_time_index = i
+        self._process_initialize(self._current_date)
+        for i in range(_dates.get_loc(self._current_date),_dates_len-1):
+            self._current_date = _dates[i]
             try:
-                self._before_market_open(self.context,new_data1)
+                self._process_handle_data(self._current_date)
             except Exception as e:
-                print '[Error] before_market_open : ' + str(e)
-                # pass
+                print str(e)
+            self._process_order(_dates[i+1])
 
+    def _order(self,order):
+        self._orders.append(order)
+
+    def _process_initialize(self,current_date):
+        if self._initialize is not None:
             try:
-                self._execute_orders()
+                self._initialize(self._context,self._data.loc[:,:current_date,:])
             except Exception as e:
-                print '[Error] execute_orders : ' + str(e)
-                # pass
+                print '(ERORR) initialize :',str(e)
 
+    def _process_handle_data(self,current_date):
+        if self._handle_data is not None:
             try:
-                self._after_market_close(self.context,new_data2)
+                self._handle_data(self._context,self._data.loc[:,:current_date,:])
             except Exception as e:
-                print '[Error] after_market_close : ' + str(e)
-                # pass
-        return self
+                print '(ERORR) handle_data', str(e)
 
-    def _order(self,symbol,amount,style=MarketOrder()):
-        order = Order()
-        order.symbol = symbol
-        order.amount = amount
-        order.style = style
-        self._order_queue.append(order)
-        return order.get_id()
-
-    def _do_portfolio_valuation(self):
-        value = 0.
-        assets = self.context.portfolio.get_assets()
-        for symbol in assets:
-            asset = assets[symbol]
-            close_price = self._data[asset.get_symbol()]['close'][self._current_time_index]
-            value += asset.get_amount() * close_price
-        return value
-
-    def _execute_orders(self):
-
-        for order in self._order_queue:
-
-            date = self._data[order.symbol]['open'].index.values[self._current_time_index]
-            date_str = pd.to_datetime(str(date)).strftime('%Y-%m-%d')
-            open_price = self._data[order.symbol]['open'][self._current_time_index]
-            high_price = self._data[order.symbol]['high'][self._current_time_index]
-            low_price = self._data[order.symbol]['low'][self._current_time_index]
-            close_price = self._data[order.symbol]['close'][self._current_time_index]
-
-            if open_price <=0 or high_price <=0 or low_price <=0 or close_price <=0:
-                print 'price can not be under 0'
-                continue
-
-            slippage = np.random.normal(0,0.0005)
-            adjust_buying_price = -1.
-            adjust_selling_price = -1.
-            if isinstance(order.style,OpenMarketOrder):
-                adjust_buying_price = open_price + open_price * slippage
-                if adjust_buying_price < low_price:
-                    adjust_buying_price = low_price
-                if adjust_buying_price > high_price:
-                    adjust_buying_price = high_price
-                adjust_selling_price = open_price +  open_price * slippage
-                if adjust_selling_price < low_price:
-                    adjust_selling_price = low_price
-                if adjust_selling_price > high_price:
-                    adjust_selling_price = high_price
-            elif isinstance(order.style,CloseMarketOrder):
-                adjust_buying_price = close_price + close_price * slippage
-                if adjust_buying_price < low_price:
-                    adjust_buying_price = low_price
-                if adjust_buying_price > high_price:
-                    adjust_buying_price = high_price
-                adjust_selling_price = close_price +  close_price * slippage
-                if adjust_selling_price < low_price:
-                    adjust_selling_price = low_price
-                if adjust_selling_price > high_price:
-                    adjust_selling_price = high_price
-            elif isinstance(order.style,LimitOrder):
-                ordered_price = order.style.get_price()
-                if low_price <= ordered_price:
-                    if ordered_price <= high_price:
-                        adjust_buying_price = ordered_price
+    def _process_order(self,current_date):
+        while len(self._orders) > 0:
+            self._orders.reverse()
+            order = self._orders.pop()
+            buying_price = -1
+            selling_price = -1
+            if isinstance(order,MarketOrder):
+                try:
+                    open_price = self._data[order._symbol]['Open'][current_date]
+                    if order._amount > 0:
+                        buying_price = open_price
+                        if buying_price != -1:
+                            self._process_buying(current_date,order._symbol,buying_price,order._amount)
                     else:
-                        adjust_buying_price = high_price
-                if ordered_price <= high_price:
-                    if low_price <= ordered_price:
-                        adjust_selling_price = ordered_price
+                        selling_price = open_price
+                        if selling_price != -1:
+                            self._process_selling(current_date,order._symbol,selling_price,np.abs(order._amount))
+                except KeyError:
+                    print 'Not available date',current_date
+            elif isinstance(order,LimitOrder):
+                try:
+                    high_price = self._data[order._symbol]['High'][current_date]
+                    low_price = self._data[order._symbol]['Low'][current_date]
+                    if order._amount > 0:
+                        if order._price >= low_price and order._price <= high_price:
+                            buying_price = order._price
+                        elif order._price > high_price:
+                            buying_price = high_price
+                        elif order._price < low_price:
+                            print 'The order hasnt been made', order._price, '<' , low_price
+                        if buying_price != -1:
+                            self._process_buying(current_date,order._symbol,buying_price,order._amount)
                     else:
-                        adjust_selling_price = low_price
-
-                print adjust_buying_price,adjust_selling_price
-
+                        if order._price >= low_price and order._price <= high_price:
+                            selling_price = order._price
+                        elif order._price < low_price:
+                            selling_price = low_price
+                        elif order._price > high_price:
+                            print 'The order hasnt been made', order._price, '>' , high_price
+                        self._process_selling(current_date,order._symbol,selling_price,np.abs(order._amount))
+                except KeyError:
+                    print 'Not available date',current_date
             else:
-                print 'Not support OrderStyle : %s ' % order.style
-                continue
+                print 'none'
 
-            if order.amount >= 0:
-                if adjust_buying_price < 0:
-                    print '(BUY  :%s) buying order hasnt been executed : %s , %s ' % (date_str,order.style,adjust_buying_price)
-                    continue
+    def _process_buying(self,current_date,symbol,price,amount):
+        # print '_process_buying',current_date,symbol,price,amount
+        if self._context._available_cash >= price * amount:
+            self._context._portfolio.add_asset(symbol,price,amount)
+            self._context._available_cash -= price * amount
+            self._buy_history.append([current_date,symbol,price,amount])
+        else:
+            print 'Not enough cash to buy'
 
-                cash_used_for_buying = adjust_buying_price * order.amount
-                if cash_used_for_buying <= self.context.cash:
-                    self.context.cash_used_for_buying += cash_used_for_buying
-                    self.context.cash -= cash_used_for_buying
-                    asset = self.context.portfolio.buy_asset(order.symbol,order.amount,adjust_buying_price)
-                    buying_history = self.context.buying_history.get(order.symbol,pd.Series([]))
-                    self.context.buying_history[order.symbol] = buying_history.append(pd.Series([adjust_buying_price],index=[date]))
-                    print '(BUY  :%s) %s' % (date_str,asset)
-                else:
-                    print '(BUY  :%s) not enough cash to buy : %s , amount = %d' % (date_str,order.symbol,order.amount)
-            else:
-                if adjust_selling_price < 0:
-                    print '(BUY  :%s) selling order hasnt been executed : %s , %s ' % (date_str,order.style,adjust_selling_price)
-                    continue
+    def _process_selling(self,current_date,symbol,price,amount):
+        # print '_process_selling',current_date,symbol,price,amount
+        if self._context._portfolio.get_asset_amount(symbol) >= amount:
+            self._context._portfolio.remove_asset(symbol,amount)
+            self._context._available_cash += price * amount
+            self._sell_history.append([current_date,symbol,price,amount])
+        else:
+            print 'Not enough amount to sell'
 
-                order.amount = np.abs(order.amount)
-                adjust_selling_price_with_fee = adjust_selling_price - (adjust_selling_price * 0.0033) # tax + transaction fee
-                cash_obtained_from_selling = adjust_selling_price_with_fee * order.amount
-                if self.context.portfolio.has_asset(order.symbol) and self.context.portfolio.get_asset_amount(order.symbol) >= order.amount:
-                    self.context.cash_obtained_from_selling += cash_obtained_from_selling
-                    self.context.cash += cash_obtained_from_selling
-                    asset = self.context.portfolio.sell_asset(order.symbol,order.amount,adjust_selling_price_with_fee)
-                    selling_history = self.context.selling_history.get(order.symbol,pd.Series([]))
-                    self.context.selling_history[order.symbol] = selling_history.append(pd.Series([adjust_selling_price],index=[date]))
-                    print '(SELL :%s) %s' % (date_str,asset)
-                else:
-                    print '(SELL :%s) not enough shares to sell : %s , amount = %d' % (date_str,order.symbol,order.amount)
+    def evaluation(self):
+        print '##### evaluation #################################'
+        try:
+            portfolio_valuation = 0.
+            for symbol in self._context._portfolio._assets:
+                print symbol,\
+                    self._context._portfolio.get_asset_amount(symbol),\
+                    self._context._portfolio.get_asset_avg_price(symbol),\
+                    self._data[symbol]['Close'][-1]
+                portfolio_valuation += self._context._portfolio.get_asset_amount(symbol) * self._data[symbol]['Close'][self._current_date]
+            total_valuation = self._context._available_cash + portfolio_valuation
+            print 'available_cash : ',self._context._available_cash
+            print 'portfolio_valuation : ', portfolio_valuation
+            print 'total_valuation : ', total_valuation,'(',self._context._initial_cash,')'
+            print 'strategy return : ', total_valuation/self._context._initial_cash - 1.
+        except KeyError as e:
+            print str(e)
+        print '##################################################'
 
-        self._order_queue = []
+    def _record(self,symbol,**kwarg):
+        if not symbol in self._history:
+            self._history[symbol] = {}
+        for key in kwarg:
+            value = kwarg[key]
+            if not key in self._history[symbol]:
+                self._history[symbol][key] = []
+            self._history[symbol][key].append(value)
+
+    def get_buy_history(self):
+        return self._buy_history
+
+    def get_sell_history(self):
+        return self._sell_history
+
+    def get_context(self):
+        return self._context
+
+    def get_data(self,symbol,from_date=None,to_date=None):
+        if from_date is None or to_date is None:
+            return self._data[symbol]
+        else:
+            fdate = pd.Timestamp(self._from_date)
+            tdate = pd.Timestamp(self._to_date)
+            return self._data[symbol][fdate:tdate]
+
+    def plot(self,symbol,from_date=None,to_date=None):
+
+        prices = self.get_data(symbol,from_date,to_date)
+
+        dates = [ mdates.date2num(date) for date in prices.index]
+        open_prices = prices['Open']
+        high_prices = prices['High']
+        low_prices = prices['Low']
+        close_prices = prices['Close']
+        volumes = prices['Volume'] if 'Volume' in prices.columns else None
+
+        chart_data = np.matrix([dates,open_prices,high_prices,low_prices,close_prices]).T.tolist()
+
+        fig = plt.figure(figsize=(15,8))
+        ax1 = plt.subplot2grid((5,4),(0,0),rowspan=4,colspan=4)
+        mfinance.candlestick_ohlc(ax1,chart_data,colorup='r',colordown='b',alpha=0.7)
+        ax1.grid(True)
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        plt.ylabel('Price')
+
+        ax2 = plt.subplot2grid((5,4),(4,0),sharex=ax1,rowspan=1,colspan=4)
+        ax2.grid(True)
+
+        fig.subplots_adjust(hspace=0)
+        plt.setp( plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
+        plt.setp(ax1.get_xticklabels(),visible=False)
+        ax1.set_yticks(ax1.get_yticks()[1:])
+
+        b = np.array(self._buy_history)
+        s = np.array(self._sell_history)
+        if len(b) > 0:
+            idx_b = (b[:,1] == symbol)
+            ax1.plot(b[idx_b,0],b[idx_b,2],'ro')
+        if len(s) > 0:
+            idx_s = (s[:,1] == symbol)
+            ax1.plot(s[idx_s,0],s[idx_s,2],'bo')
+
+        return ax1,ax2

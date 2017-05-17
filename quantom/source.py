@@ -1,73 +1,49 @@
 import os
-import datetime as dt
-import urllib as url
 
+import datetime as dt
 import numpy as np
 import pandas as pd
+from pandas_datareader import data
 
-stock_exchange_path = {
-    'NASDAQ' : '/../data/usa/NASDAQ/',
-    'NYSE' : '/../data/usa/NYSE/',
-    'KOSDAQ' : '/../data/korea/KOSDAQ/',
-    'KOSPI' : '/../data/korea/KOSPI/'
-}
+class DataSource(object):
+    def __init__(self):
+        self._base_dir = os.path.dirname(__file__) + '/data'
+        if not os.path.exists(self._base_dir):
+            os.makedirs(self._base_dir)
 
-def update_stock_data_file(exchange,symbol,data):
-    target_file = os.path.dirname(__file__)  + stock_exchange_path[exchange] + symbol + '.csv'
-    try:
-        history_data =  pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
-                           parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
-                           dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})
-        for date in data.index.values:
-            history_data.loc[date] = data.loc[date]
-        history_data.sort_index(inplace=True)
-        history_data.index.name = 'date'
-        history_data.to_csv(target_file)
-    except IOError:
-        data.to_csv(target_file)
+    def set_base_dir(self,base_dir):
+        self._base_dir = base_dir
+        if not os.path.exists(self._base_dir):
+            os.makedirs(self._base_dir)
 
+    def read_stock_data(self,symbol,from_date,to_date):
+        stock_data_file = self._base_dir + '/' + symbol + '.csv'
+        from_date_time = dt.datetime.strptime(from_date, '%Y-%m-%d')
+        to_date_time = dt.datetime.strptime(to_date, '%Y-%m-%d')
+        if os.path.exists(stock_data_file):
+            history_data = pd.read_csv(stock_data_file, index_col='Date',
+                usecols=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'],
+                parse_dates=['Date'], date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
+                dtype={'Open': np.float, 'High': np.float, 'Low': np.float, 'Close': np.float,'Volume': np.float})
+            try:
+                history_data.ix[from_date_time]
+                history_data.ix[to_date_time]
+            except KeyError:
+                stock_data = data.DataReader(symbol, 'google', from_date, to_date)
+                for date in stock_data.index.values:
+                    history_data.ix[date] = stock_data.ix[date]
+                history_data.sort_index(inplace=True)
+                history_data.index.name = 'Date'
+                history_data.to_csv(stock_data_file)
+        else:
+            history_data = data.DataReader(symbol, 'google', from_date, to_date)
+            history_data.sort_index(inplace=True)
+            history_data.index.name = 'Date'
+            history_data.to_csv(stock_data_file)
+        return history_data.ix[from_date_time:to_date_time]
 
-def read_stock_data_from_google(exchange,symbol,start_date='2015-06-04',end_date='2016-01-08'):
-    sym = symbol.upper()
-    start = dt.date(int(start_date[0:4]),int(start_date[5:7]),int(start_date[8:10]))
-    end = dt.date(int(end_date[0:4]),int(end_date[5:7]),int(end_date[8:10]))
-    url_string = "http://www.google.com/finance/historical?q={0}".format(sym)
-    url_string += "&startdate={0}&enddate={1}&output=csv".format(start.strftime('%b %d, %Y'),end.strftime('%b %d, %Y'))
-    csv = url.urlopen(url_string).readlines()[1:]
-    csv.reverse()
-
-    result = pd.DataFrame([],columns=['open','high','low','close','volume'])
-    result.to_csv()
-    for line in csv:
-        _date, _open, _high , _low, _close, _volume = line.rstrip().split(',')
-        open_price, high_price, low_price, close_price = [float(x) for x in [_open,_high,_low,_close]]
-        date = dt.datetime.strptime(_date,'%d-%b-%y')
-        result = result.append(pd.DataFrame([[open_price,high_price,low_price,close_price,_volume]],columns=['open','high','low','close','volume'],index=[date]))
-    result.index.name = 'date'
-    return result
-
-def read_stock_data_from_file(exchange,symbol):
-    target_file = os.path.dirname(__file__) + stock_exchange_path[exchange] + symbol + '.csv'
-    return pd.read_csv(target_file,index_col='date',usecols=['date','open','high','low','close','volume'],
-                       parse_dates=['date'],date_parser=lambda x: dt.datetime.strptime(x, '%Y-%m-%d'),
-                       dtype={'open':np.float,'high':np.float,'low':np.float,'close':np.float,'volume':np.int})
-
-def read_stock_data_by_exchange(exchange):
-    stock_data = {}
-    for f in os.listdir(os.path.dirname(__file__) + stock_exchange_path[exchange]):
-        if f.endswith(".csv"):
-            symbol = f.split('.')[0]
-            stock_data[symbol] = read_stock_data_from_file(exchange,symbol)
-    return pd.Panel(stock_data)
-
-def read_stock_data_from_all_files():
-    stock_data = {}
-    for exchange in stock_exchange_path:
-        try:
-            for f in os.listdir(os.path.dirname(__file__) + stock_exchange_path[exchange]):
-                if f.endswith(".csv"):
-                    symbol = f.split('.')[0]
-                    stock_data[symbol] = read_stock_data_from_file(exchange,symbol)
-        except Exception as e:
-            print str(e)
-    return pd.Panel(stock_data)
+    def read_all_stocks_data(self,symbols,from_date,to_date):
+        stocks_data = {}
+        for symbol in symbols:
+            stocks_data[symbol] = self.read_stock_data(symbol,from_date=from_date,to_date=to_date)
+        return pd.Panel(stocks_data)
