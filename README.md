@@ -8,9 +8,9 @@ Simple Stock Trading Back-Testing Program
 - matplotlib
 
 ## How to run
-cd Quants
-export PYTHONPATH=.
-python tests/test.py
+    cd Quants
+    export PYTHONPATH=.
+    python tests/test.py
 
 ##Author
 - HyeonRok Lee ( https://kr.linkedin.com/in/hyeonrok-lee-71300084 )
