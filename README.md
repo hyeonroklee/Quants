@@ -6,6 +6,8 @@ Simple Stock Trading Back-Testing Program
 - pandas
 - pandas_datareader
 - matplotlib
+- sklearn
+- tensorflow
 
 ## How to run
     cd Quants
