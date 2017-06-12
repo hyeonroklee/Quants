@@ -18,7 +18,10 @@ from strategy import (
 )
 
 from util import (
-    compute_beta_alpha
+    get_beta_alpha,
+    get_sma,
+    get_rsi,
+    get_stochastic
 )
 
 __all__ = [
@@ -31,5 +34,8 @@ __all__ = [
     'DataSource',
     'Strategy',
     'GDCrossStrategy',
-    'compute_beta_alpha'
+    'get_beta_alpha',
+    'get_sma',
+    'get_rsi',
+    'get_stochastic'
 ]
