@@ -21,7 +21,8 @@ from util import (
     get_beta_alpha,
     get_sma,
     get_rsi,
-    get_stochastic
+    get_stochastic,
+    plot_stock
 )
 
 __all__ = [
@@ -37,5 +38,6 @@ __all__ = [
     'get_beta_alpha',
     'get_sma',
     'get_rsi',
-    'get_stochastic'
+    'get_stochastic',
+    'plot_stock'
 ]

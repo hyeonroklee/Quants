@@ -10,11 +10,11 @@ class QSystemCallback(QSystem.Callback):
 
     def initialize(self, context, data):
         super(QSystemCallback, self).initialize(context, data)
-        symbols = ['GOOG']
+        symbols = ['GOOG','AAPL','FB','AMZN', 'MSFT']
         strategies = {}
         for symbol in symbols:
             strategy = GDCrossStrategy()
-            strategy.optimize(data[symbol], short_ma_range=[5, 10], long_ma_range=[14, 20])
+            strategy.optimize(data[symbol], short_ma_range=[5, 6], long_ma_range=[14, 15])
             strategies[symbol] = strategy
         context.symbols = symbols
         context.strategies = strategies
@@ -29,22 +29,23 @@ class QSystemCallback(QSystem.Callback):
 
 if __name__ == '__main__':
     initial_cash = 2000
-    begin_date = '2015-01-02'
+    begin_date = '2015-01-01'
     from_date = '2016-06-01'
     to_date = '2016-12-01'
-    symbols = ['SPY', 'GOOG']
+    symbols = ['GOOG','AAPL','FB','AMZN', 'MSFT']
 
     s = DataSource()
-    stock_data = s.read_all_stocks_data(symbols,begin_date,to_date)
-
-    q = QSystem(from_date=from_date,to_date=to_date,data=stock_data,
+    # s.update_stock_data(symbols,from_date,to_date)
+    data = s.read_stock_data(symbols)[:,pd.Timestamp(begin_date):,:]
+    q = QSystem(from_date=from_date,to_date=to_date,data=data,
             initial_cash=initial_cash,callback=QSystemCallback())
     q.run()
     q.evaluation()
 
-    symbol = 'GOOG'
-    ax1, ax2 = q.plot(symbol,from_date,to_date)
+    buying_history = q.get_buy_history()
+    selling_history = q.get_sell_history()
     ctx = q.get_context()
-    data = q.get_data(symbol,from_date,to_date)
-    ctx.strategies[symbol].plot(data,ax1)
+    for symbol in symbols:
+        ax1, ax2 = plot_stock(data[symbol][pd.Timestamp(from_date):],buying_history[symbol],selling_history[symbol])
+        ctx.strategies[symbol].plot(data[symbol][pd.Timestamp(from_date):],ax1)
     plt.show()
